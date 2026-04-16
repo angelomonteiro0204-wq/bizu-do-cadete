@@ -1,48 +1,368 @@
-import { ScrollView, Text, View, TouchableOpacity } from "react-native";
-
+import { useCallback, useState } from "react";
+import {
+  ScrollView,
+  Text,
+  View,
+  TouchableOpacity,
+  RefreshControl,
+  StyleSheet,
+} from "react-native";
+import { useRouter, useFocusEffect } from "expo-router";
 import { ScreenContainer } from "@/components/screen-container";
+import { useColors } from "@/hooks/use-colors";
+import { getStats, getQuizzes, getAttempts, type AppStats } from "@/lib/quiz-store";
+import type { Quiz, QuizAttempt } from "@/shared/quiz-types";
+import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 
-/**
- * Home Screen - NativeWind Example
- *
- * This template uses NativeWind (Tailwind CSS for React Native).
- * You can use familiar Tailwind classes directly in className props.
- *
- * Key patterns:
- * - Use `className` instead of `style` for most styling
- * - Theme colors: use tokens directly (bg-background, text-foreground, bg-primary, etc.); no dark: prefix needed
- * - Responsive: standard Tailwind breakpoints work on web
- * - Custom colors defined in tailwind.config.js
- */
 export default function HomeScreen() {
+  const colors = useColors();
+  const router = useRouter();
+  const [stats, setStats] = useState<AppStats>({
+    totalQuizzes: 0,
+    totalQuestions: 0,
+    totalCorrect: 0,
+    totalAnswered: 0,
+  });
+  const [recentQuizzes, setRecentQuizzes] = useState<Quiz[]>([]);
+  const [recentAttempts, setRecentAttempts] = useState<QuizAttempt[]>([]);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const loadData = useCallback(async () => {
+    const [s, q, a] = await Promise.all([getStats(), getQuizzes(), getAttempts()]);
+    setStats(s);
+    setRecentQuizzes(q.slice(0, 3));
+    setRecentAttempts(a.slice(0, 5));
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      loadData();
+    }, [loadData])
+  );
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await loadData();
+    setRefreshing(false);
+  };
+
+  const accuracy =
+    stats.totalAnswered > 0
+      ? Math.round((stats.totalCorrect / stats.totalAnswered) * 100)
+      : 0;
+
   return (
-    <ScreenContainer className="p-6">
-      <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
-        <View className="flex-1 gap-8">
-          {/* Hero Section */}
-          <View className="items-center gap-2">
-            <Text className="text-4xl font-bold text-foreground">Welcome</Text>
-            <Text className="text-base text-muted text-center">
-              Edit app/(tabs)/index.tsx to get started
-            </Text>
-          </View>
-
-          {/* Example Card */}
-          <View className="w-full max-w-sm self-center bg-surface rounded-2xl p-6 shadow-sm border border-border">
-            <Text className="text-lg font-semibold text-foreground mb-2">NativeWind Ready</Text>
-            <Text className="text-sm text-muted leading-relaxed">
-              Use Tailwind CSS classes directly in your React Native components.
-            </Text>
-          </View>
-
-          {/* Example Button */}
-          <View className="items-center">
-            <TouchableOpacity className="bg-primary px-6 py-3 rounded-full active:opacity-80">
-              <Text className="text-background font-semibold">Get Started</Text>
-            </TouchableOpacity>
+    <ScreenContainer>
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />
+        }
+      >
+        {/* Header */}
+        <View style={[styles.header, { backgroundColor: colors.primary }]}>
+          <View style={styles.headerContent}>
+            <View>
+              <Text style={styles.headerGreeting}>Academia Barro Branco</Text>
+              <Text style={styles.headerTitle}>Bizu do Cadete</Text>
+            </View>
+            <View style={[styles.headerBadge, { backgroundColor: "rgba(255,255,255,0.2)" }]}>
+              <MaterialIcons name="school" size={32} color="#FFFFFF" />
+            </View>
           </View>
         </View>
+
+        {/* Stats Cards */}
+        <View style={styles.statsContainer}>
+          <View style={[styles.statCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+            <MaterialIcons name="quiz" size={24} color={colors.primary} />
+            <Text style={[styles.statNumber, { color: colors.foreground }]}>{stats.totalQuizzes}</Text>
+            <Text style={[styles.statLabel, { color: colors.muted }]}>Questionários</Text>
+          </View>
+          <View style={[styles.statCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+            <MaterialIcons name="check-circle" size={24} color={colors.success} />
+            <Text style={[styles.statNumber, { color: colors.foreground }]}>{stats.totalCorrect}</Text>
+            <Text style={[styles.statLabel, { color: colors.muted }]}>Acertos</Text>
+          </View>
+          <View style={[styles.statCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+            <MaterialIcons name="percent" size={24} color={colors.warning} />
+            <Text style={[styles.statNumber, { color: colors.foreground }]}>{accuracy}%</Text>
+            <Text style={[styles.statLabel, { color: colors.muted }]}>Aproveitamento</Text>
+          </View>
+        </View>
+
+        {/* Quick Actions */}
+        <View style={styles.section}>
+          <TouchableOpacity
+            style={[styles.primaryButton, { backgroundColor: colors.primary }]}
+            onPress={() => router.push("/(tabs)/new-quiz" as any)}
+            activeOpacity={0.8}
+          >
+            <MaterialIcons name="add-circle" size={24} color="#FFFFFF" />
+            <Text style={styles.primaryButtonText}>Novo Questionário</Text>
+            <MaterialIcons name="arrow-forward" size={20} color="#FFFFFF" />
+          </TouchableOpacity>
+        </View>
+
+        {/* Recent Attempts */}
+        {recentAttempts.length > 0 && (
+          <View style={styles.section}>
+            <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Últimas Tentativas</Text>
+            {recentAttempts.map((attempt) => {
+              const pct = Math.round((attempt.score / attempt.totalQuestions) * 100);
+              const isGood = pct >= 70;
+              return (
+                <View
+                  key={attempt.id}
+                  style={[styles.attemptCard, { backgroundColor: colors.surface, borderColor: colors.border }]}
+                >
+                  <View style={styles.attemptInfo}>
+                    <Text style={[styles.attemptTitle, { color: colors.foreground }]} numberOfLines={1}>
+                      {attempt.quizTitle}
+                    </Text>
+                    <Text style={[styles.attemptDate, { color: colors.muted }]}>
+                      {new Date(attempt.completedAt).toLocaleDateString("pt-BR")}
+                    </Text>
+                  </View>
+                  <View
+                    style={[
+                      styles.attemptScore,
+                      { backgroundColor: isGood ? colors.success + "20" : colors.error + "20" },
+                    ]}
+                  >
+                    <Text
+                      style={[styles.attemptScoreText, { color: isGood ? colors.success : colors.error }]}
+                    >
+                      {attempt.score}/{attempt.totalQuestions}
+                    </Text>
+                  </View>
+                </View>
+              );
+            })}
+          </View>
+        )}
+
+        {/* Recent Quizzes */}
+        {recentQuizzes.length > 0 && (
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Questionários Salvos</Text>
+              <TouchableOpacity onPress={() => router.push("/(tabs)/history" as any)} activeOpacity={0.7}>
+                <Text style={[styles.seeAll, { color: colors.primary }]}>Ver todos</Text>
+              </TouchableOpacity>
+            </View>
+            {recentQuizzes.map((quiz) => (
+              <TouchableOpacity
+                key={quiz.id}
+                style={[styles.quizCard, { backgroundColor: colors.surface, borderColor: colors.border }]}
+                onPress={() => router.push(`/quiz/${quiz.id}` as any)}
+                activeOpacity={0.7}
+              >
+                <View style={[styles.quizIcon, { backgroundColor: colors.primary + "15" }]}>
+                  <MaterialIcons name="description" size={20} color={colors.primary} />
+                </View>
+                <View style={styles.quizInfo}>
+                  <Text style={[styles.quizTitle, { color: colors.foreground }]} numberOfLines={1}>
+                    {quiz.title}
+                  </Text>
+                  <Text style={[styles.quizMeta, { color: colors.muted }]}>
+                    {quiz.questions.length} questões
+                  </Text>
+                </View>
+                <MaterialIcons name="chevron-right" size={20} color={colors.muted} />
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
+
+        {/* Empty State */}
+        {recentQuizzes.length === 0 && recentAttempts.length === 0 && (
+          <View style={styles.emptyState}>
+            <MaterialIcons name="school" size={64} color={colors.muted} />
+            <Text style={[styles.emptyTitle, { color: colors.foreground }]}>
+              Bem-vindo, Cadete!
+            </Text>
+            <Text style={[styles.emptyText, { color: colors.muted }]}>
+              Comece enviando um PDF ou PowerPoint para gerar seu primeiro questionário de estudos.
+            </Text>
+          </View>
+        )}
+
+        <View style={{ height: 32 }} />
       </ScrollView>
     </ScreenContainer>
   );
 }
+
+const styles = StyleSheet.create({
+  scrollContent: { flexGrow: 1 },
+  header: {
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    paddingBottom: 24,
+    borderBottomLeftRadius: 24,
+    borderBottomRightRadius: 24,
+  },
+  headerContent: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  headerGreeting: {
+    fontSize: 13,
+    color: "rgba(255,255,255,0.8)",
+    fontWeight: "500",
+    letterSpacing: 0.5,
+    textTransform: "uppercase",
+  },
+  headerTitle: {
+    fontSize: 26,
+    fontWeight: "800",
+    color: "#FFFFFF",
+    marginTop: 2,
+  },
+  headerBadge: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  statsContainer: {
+    flexDirection: "row",
+    paddingHorizontal: 16,
+    marginTop: -12,
+    gap: 10,
+  },
+  statCard: {
+    flex: 1,
+    alignItems: "center",
+    paddingVertical: 16,
+    borderRadius: 16,
+    borderWidth: 1,
+    gap: 4,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  statNumber: {
+    fontSize: 22,
+    fontWeight: "700",
+  },
+  statLabel: {
+    fontSize: 11,
+    fontWeight: "500",
+  },
+  section: {
+    paddingHorizontal: 16,
+    marginTop: 20,
+  },
+  sectionHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 12,
+  },
+  sectionTitle: {
+    fontSize: 17,
+    fontWeight: "700",
+    marginBottom: 12,
+  },
+  seeAll: {
+    fontSize: 14,
+    fontWeight: "600",
+    marginBottom: 12,
+  },
+  primaryButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 16,
+    borderRadius: 16,
+    gap: 10,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  primaryButtonText: {
+    fontSize: 17,
+    fontWeight: "700",
+    color: "#FFFFFF",
+    flex: 1,
+  },
+  attemptCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 14,
+    borderRadius: 12,
+    borderWidth: 1,
+    marginBottom: 8,
+  },
+  attemptInfo: {
+    flex: 1,
+  },
+  attemptTitle: {
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  attemptDate: {
+    fontSize: 12,
+    marginTop: 2,
+  },
+  attemptScore: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+  },
+  attemptScoreText: {
+    fontSize: 14,
+    fontWeight: "700",
+  },
+  quizCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 14,
+    borderRadius: 12,
+    borderWidth: 1,
+    marginBottom: 8,
+    gap: 12,
+  },
+  quizIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 10,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  quizInfo: {
+    flex: 1,
+  },
+  quizTitle: {
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  quizMeta: {
+    fontSize: 12,
+    marginTop: 2,
+  },
+  emptyState: {
+    alignItems: "center",
+    paddingHorizontal: 40,
+    paddingTop: 48,
+    gap: 12,
+  },
+  emptyTitle: {
+    fontSize: 20,
+    fontWeight: "700",
+    textAlign: "center",
+  },
+  emptyText: {
+    fontSize: 14,
+    textAlign: "center",
+    lineHeight: 20,
+  },
+});

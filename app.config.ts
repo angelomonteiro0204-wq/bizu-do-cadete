@@ -6,7 +6,9 @@ import type { ExpoConfig } from "expo/config";
 // e.g., "my-app" created at 2024-01-15 10:30:45 -> "space.manus.my.app.t20240115103045"
 // Bundle ID can only contain letters, numbers, and dots
 // Android requires each dot-separated segment to start with a letter
-const rawBundleId = "space.manus.bizu.do.cadete.t20260416080922";
+// 'do' is a Java keyword and cannot be used as a package segment
+// Changed 'bizu.do.cadete' to 'bizu.docadete' to avoid the reserved word
+const rawBundleId = "space.manus.bizu.docadete.t20260416080922";
 const bundleId =
   rawBundleId
     .replace(/[-_]/g, ".") // Replace hyphens/underscores with dots
@@ -18,7 +20,10 @@ const bundleId =
     .map((segment) => {
       // Android requires each segment to start with a letter
       // Prefix with 'x' if segment starts with a digit
-      return /^[a-zA-Z]/.test(segment) ? segment : "x" + segment;
+      // Also prefix Java reserved words with 'x'
+      const javaReserved = new Set(["do","if","for","int","new","try","byte","case","char","else","goto","long","enum","void","this","null","true","false","class","final","float","short","super","while","break","catch","throw","const","continue","default","double","import","native","public","return","static","switch","throws","boolean","extends","finally","package","private","abstract","implements","instanceof","interface","protected","synchronized","transient","volatile","strictfp"]);
+      const s = /^[a-zA-Z]/.test(segment) ? segment : "x" + segment;
+      return javaReserved.has(s) ? "x" + s : s;
     })
     .join(".") || "space.manus.app";
 // Extract timestamp from bundle ID and prefix with "manus" for deep link scheme

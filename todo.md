@@ -40,3 +40,4 @@
 - [x] Atualizar tela Histórico com filtro por matéria e badges
 - [x] Adicionar seletor de matéria na tela de novo questionário
 - [x] Adicionar opção de modo simulado (com/sem timer) na tela de novo questionário
+- [x] BUG: Build APK falha porque 'do' no namespace é palavra reservada Java - corrigido: 'bizu.do.cadete' -> 'bizu.docadete'

@@ -27,3 +27,5 @@
 - [x] Atualizar headers das telas com ícone genérico policial/estudos
 - [x] Atualizar app.config.ts com nova logo
 - [x] BUG: Geração de questionário não está funcionando - corrigido parser JSON robusto para trailing commas
+- [x] BUG: Erro "Cannot read properties of undefined (reading '0')" - corrigido: extração de texto agora é server-side com pdf-parse e officeparser
+- [x] Adicionar diversificação obrigatória de questões (seed aleatório + instruções de variação no prompt)

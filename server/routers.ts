@@ -4,54 +4,107 @@ import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, router } from "./_core/trpc";
 import { invokeLLM } from "./_core/llm";
-import { storagePut } from "./storage";
+import { PDFParse } from "pdf-parse";
+// @ts-ignore - officeparser typing issue
+import { parseOffice } from "officeparser";
 
 /**
  * Robustly parse JSON from LLM output.
  * Handles: markdown code blocks, trailing commas, BOM, control chars.
  */
 function parseJsonRobust(raw: string): any {
-  // Strip markdown code fences
   let text = raw.trim();
   const fenceMatch = text.match(/```(?:json)?\s*\n?([\s\S]*?)```/);
   if (fenceMatch) {
     text = fenceMatch[1].trim();
   }
-
-  // Remove BOM
   text = text.replace(/^\uFEFF/, "");
 
-  // Try direct parse first
   try {
     return JSON.parse(text);
-  } catch (_) {
-    // continue to cleanup
-  }
+  } catch (_) {}
 
-  // Remove trailing commas before ] or }
   text = text.replace(/,\s*([\]}])/g, "$1");
-
-  // Remove control characters except \n \r \t
   text = text.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g, "");
 
   try {
     return JSON.parse(text);
-  } catch (_) {
-    // continue
-  }
+  } catch (_) {}
 
-  // Last resort: find the first { ... } or [ ... ] block
   const objMatch = text.match(/\{[\s\S]*\}/);
   if (objMatch) {
     const cleaned = objMatch[0].replace(/,\s*([\]}])/g, "$1");
     try {
       return JSON.parse(cleaned);
-    } catch (_) {
-      // fall through
-    }
+    } catch (_) {}
   }
 
   throw new Error("Não foi possível interpretar a resposta da IA como JSON válido.");
+}
+
+/**
+ * Safely extract text content from LLM response.
+ */
+function extractLLMContent(response: any): string {
+  if (!response) throw new Error("Resposta vazia da IA.");
+  const choices = response.choices;
+  if (!choices || !Array.isArray(choices) || choices.length === 0) {
+    console.error("[LLM] Unexpected response shape:", JSON.stringify(response).substring(0, 500));
+    throw new Error("A IA retornou uma resposta inesperada. Tente novamente.");
+  }
+  const message = choices[0]?.message;
+  if (!message) {
+    throw new Error("A IA não retornou uma mensagem válida.");
+  }
+  const content = message.content;
+  if (typeof content === "string") {
+    return content;
+  }
+  if (Array.isArray(content)) {
+    const textParts = content
+      .filter((part: any) => part.type === "text" && typeof part.text === "string")
+      .map((part: any) => part.text);
+    if (textParts.length > 0) return textParts.join("\n");
+  }
+  throw new Error("A IA retornou conteúdo em formato não suportado.");
+}
+
+/**
+ * Extract text from PDF buffer using pdf-parse.
+ */
+async function extractTextFromPdf(buffer: Buffer): Promise<string> {
+  try {
+    const uint8 = new Uint8Array(buffer);
+    const parser = new PDFParse(uint8);
+    const result = await parser.getText();
+    // result is { pages: [...], text: string | undefined, total: number }
+    if (result && typeof result === "object") {
+      if (typeof (result as any).text === "string") {
+        return (result as any).text;
+      }
+      // Fallback: join text from pages
+      if (Array.isArray((result as any).pages)) {
+        return (result as any).pages.map((p: any) => p.text || "").join("\n");
+      }
+    }
+    return "";
+  } catch (err: any) {
+    console.error("[PDF] Extraction error:", err.message);
+    throw new Error("Falha ao extrair texto do PDF. Verifique se o arquivo não está corrompido ou protegido por senha.");
+  }
+}
+
+/**
+ * Extract text from PPTX buffer using officeparser.
+ */
+async function extractTextFromPptx(buffer: Buffer): Promise<string> {
+  try {
+    const text = await parseOffice(buffer);
+    return typeof text === "string" ? text : "";
+  } catch (err: any) {
+    console.error("[PPTX] Extraction error:", err.message);
+    throw new Error("Falha ao extrair texto do PowerPoint. Verifique se o arquivo não está corrompido.");
+  }
 }
 
 const QUIZ_SYSTEM_PROMPT = (questionCount: number) => `Você é um especialista em elaboração de questões para concursos e provas militares, no estilo "Questionários APMBB" (Academia de Polícia Militar do Barro Branco). Sua tarefa é gerar questões de múltipla escolha com base no conteúdo fornecido.
@@ -65,6 +118,14 @@ REGRAS OBRIGATÓRIAS:
 6. O gabarito comentado deve explicar POR QUE a alternativa correta está certa e POR QUE as demais estão erradas, fazendo referência ao conteúdo original.
 7. Use linguagem formal e técnica adequada ao contexto militar/policial.
 8. Varie os tipos de questão: conceituais, de aplicação, interpretativas e analíticas.
+
+DIVERSIFICAÇÃO OBRIGATÓRIA:
+- Cada questionário gerado DEVE conter questões DIFERENTES, mesmo que o conteúdo de origem seja o mesmo.
+- Varie os enunciados, a ordem dos tópicos abordados, a perspectiva de cada questão e a posição da alternativa correta (distribua entre A, B, C, D e E de forma equilibrada).
+- Aborde o conteúdo de ângulos diferentes: ora pergunte sobre definições, ora sobre exceções, ora sobre aplicações práticas, ora sobre comparações entre conceitos, ora sobre consequências ou implicações.
+- Utilize diferentes formatos de enunciado: afirmações para julgar, perguntas diretas, completar lacunas, "assinale a alternativa INCORRETA", análise de situações hipotéticas, entre outros.
+- Nunca repita a mesma estrutura de questão ou o mesmo trecho do conteúdo em mais de uma questão do mesmo questionário.
+- Use um número aleatório como seed para garantir variação: SEED=${Date.now()}.
 
 IMPORTANTE: Retorne APENAS JSON válido, sem comentários, sem trailing commas, sem texto antes ou depois.
 
@@ -127,11 +188,7 @@ export const appRouter = router({
           response_format: { type: "json_object" },
         });
 
-        const content = response.choices[0]?.message?.content;
-        if (!content || typeof content !== "string") {
-          throw new Error("Falha ao gerar questões: resposta vazia da IA");
-        }
-
+        const content = extractLLMContent(response);
         const parsed = parseJsonRobust(content);
         const rawQuestions = parsed.questions || parsed;
 
@@ -164,75 +221,54 @@ export const appRouter = router({
       .mutation(async ({ input }) => {
         const { fileBase64, fileName, mimeType, title, questionCount } = input;
 
+        // Decode base64 to buffer
         const buffer = Buffer.from(fileBase64, "base64");
-        const fileKey = `uploads/${Date.now()}_${fileName}`;
-        const { url: fileUrl } = await storagePut(fileKey, buffer, mimeType);
 
+        // Determine file type
         const isPdf = mimeType === "application/pdf" || fileName.toLowerCase().endsWith(".pdf");
         const isPptx =
-          mimeType ===
-            "application/vnd.openxmlformats-officedocument.presentationml.presentation" ||
+          mimeType === "application/vnd.openxmlformats-officedocument.presentationml.presentation" ||
           mimeType === "application/vnd.ms-powerpoint" ||
           fileName.toLowerCase().endsWith(".pptx") ||
           fileName.toLowerCase().endsWith(".ppt");
 
-        let extractionPrompt = "";
+        // Extract text server-side (no LLM needed for extraction)
+        let extractedText = "";
         if (isPdf) {
-          extractionPrompt =
-            "Extraia TODO o conteúdo textual deste arquivo PDF. Organize o texto de forma clara, mantendo a estrutura de tópicos, títulos e parágrafos. Retorne apenas o texto extraído, sem comentários adicionais.";
+          extractedText = await extractTextFromPdf(buffer);
         } else if (isPptx) {
-          extractionPrompt =
-            "Extraia TODO o conteúdo textual desta apresentação PowerPoint. Para cada slide, identifique o título e o conteúdo. Organize de forma clara, indicando 'Slide X:' antes de cada slide. Retorne apenas o texto extraído, sem comentários adicionais.";
+          extractedText = await extractTextFromPptx(buffer);
         } else {
-          extractionPrompt =
-            "Extraia TODO o conteúdo textual deste documento. Organize de forma clara e estruturada. Retorne apenas o texto extraído.";
+          // Try officeparser as generic fallback
+          try {
+            const result = await parseOffice(buffer);
+            extractedText = typeof result === "string" ? result : String(result ?? "");
+          } catch {
+            throw new Error("Formato de arquivo não suportado. Envie um PDF ou PowerPoint.");
+          }
         }
 
-        const extractionResponse = await invokeLLM({
-          messages: [
-            {
-              role: "user",
-              content: [
-                { type: "text", text: extractionPrompt },
-                {
-                  type: "file_url",
-                  file_url: {
-                    url: fileUrl,
-                    mime_type: isPdf ? "application/pdf" : undefined,
-                  },
-                },
-              ],
-            },
-          ],
-        });
-
-        const extractedText =
-          typeof extractionResponse.choices[0]?.message?.content === "string"
-            ? extractionResponse.choices[0].message.content
-            : "";
-
-        if (!extractedText || extractedText.length < 50) {
+        if (!extractedText || extractedText.trim().length < 30) {
           throw new Error(
-            "Não foi possível extrair texto suficiente do arquivo. Verifique se o arquivo contém texto legível."
+            "Não foi possível extrair texto suficiente do arquivo. Verifique se o arquivo contém texto legível (não apenas imagens)."
           );
         }
 
+        console.log(`[Quiz] Extracted ${extractedText.length} chars from "${fileName}"`);
+
+        // Generate quiz questions via LLM using extracted text
         const quizResponse = await invokeLLM({
           messages: [
             { role: "system", content: QUIZ_SYSTEM_PROMPT(questionCount) },
             {
               role: "user",
-              content: `Com base no seguinte conteúdo extraído do arquivo "${fileName}", gere ${questionCount} questões no estilo Questionários APMBB:\n\n${extractedText.substring(0, 30000)}`,
+              content: `Com base no seguinte conteúdo extraído do arquivo "${fileName}", gere ${questionCount} questões no estilo Questionários APMBB. Aborde o conteúdo inteiramente, criando questões que cubram todos os tópicos apresentados:\n\n${extractedText.substring(0, 30000)}`,
             },
           ],
           response_format: { type: "json_object" },
         });
 
-        const quizContent = quizResponse.choices[0]?.message?.content;
-        if (!quizContent || typeof quizContent !== "string") {
-          throw new Error("Falha ao gerar questões: resposta vazia da IA");
-        }
-
+        const quizContent = extractLLMContent(quizResponse);
         const parsed = parseJsonRobust(quizContent);
         const rawQuestions = parsed.questions || parsed;
 

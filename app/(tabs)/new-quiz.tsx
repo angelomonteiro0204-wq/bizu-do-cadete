@@ -201,6 +201,12 @@ export default function NewQuizScreen() {
                 </View>
               )}
             </TouchableOpacity>
+            <View style={styles.formatHint}>
+              <MaterialIcons name="info-outline" size={13} color={colors.muted} />
+              <Text style={[styles.formatHintText, { color: colors.muted }]}>
+                Em caso de incompatibilidade do formato do arquivo ou erro de extração do texto do documento, converta para PDF e tente novamente.
+              </Text>
+            </View>
           </View>
 
           {/* Title */}
@@ -448,5 +454,18 @@ const styles = StyleSheet.create({
     fontSize: 12,
     lineHeight: 18,
     flex: 1,
+  },
+  formatHint: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 6,
+    marginTop: 8,
+    paddingHorizontal: 4,
+  },
+  formatHintText: {
+    fontSize: 11,
+    lineHeight: 16,
+    flex: 1,
+    fontStyle: "italic",
   },
 });

@@ -32,3 +32,4 @@
 - [x] BUG: Extração de texto do PowerPoint não está funcionando - corrigido usando toText() do officeparser
 - [x] Adicionar suporte a mais formatos: .txt, .ppt, .doc, .docx, .rtf, .xlsx, .odt, .odp, .ods, .md, .csv, .html, .xml, .json
 - [x] Atualizar file picker no frontend para aceitar novos formatos
+- [x] Adicionar aviso discreto sobre compatibilidade de formato na tela de upload

@@ -21,3 +21,8 @@
 - [x] Gerar nova logo do app incorporando o brasão da APMBB
 - [x] Atualizar tela Home com brasão da APMBB no header
 - [x] Atualizar app.config.ts com nova logo
+- [x] Remover brasão da APMBB de todas as telas (Home, Novo, Histórico)
+- [x] Remover arquivo brasao-apmbb.png do projeto
+- [x] Gerar nova logo original com tema policial/estudos (sem brasão oficial)
+- [x] Atualizar headers das telas com ícone genérico policial/estudos
+- [x] Atualizar app.config.ts com nova logo

@@ -32,7 +32,7 @@ const env = {
   appSlug: "bizu-do-cadete",
   // S3 URL of the app logo - set this to the URL returned by generate_image when creating custom logo
   // Leave empty to use the default icon from assets/images/icon.png
-  logoUrl: "https://d2xsxph8kpxj0f.cloudfront.net/310519663538599756/Aw9xoMMFEdGZdNpGTgZpJA/bizu-logo-v2-aMKKVKWF5Y4KdeVPCAPgXs.png",
+  logoUrl: "https://d2xsxph8kpxj0f.cloudfront.net/310519663538599756/Aw9xoMMFEdGZdNpGTgZpJA/bizu-logo-v3-Wv2aZ5GaxecieBjwQ7ypyi.png",
   scheme: schemeFromBundleId,
   iosBundleId: bundleId,
   androidPackage: bundleId,

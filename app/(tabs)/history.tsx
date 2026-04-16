@@ -14,9 +14,6 @@ import { useColors } from "@/hooks/use-colors";
 import { getQuizzes, deleteQuiz, getAttemptsByQuizId } from "@/lib/quiz-store";
 import type { Quiz, QuizAttempt } from "@/shared/quiz-types";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
-import { Image } from "expo-image";
-
-const brasaoImage = require("@/assets/images/brasao-apmbb.png");
 
 interface QuizWithAttempts extends Quiz {
   lastAttempt?: QuizAttempt;
@@ -168,14 +165,14 @@ export default function HistoryScreen() {
             </Text>
           </View>
           <View style={styles.headerBrasao}>
-            <Image source={brasaoImage} style={styles.headerBrasaoImg} contentFit="contain" />
+            <MaterialIcons name="history" size={32} color="#FFFFFF" />
           </View>
         </View>
       </View>
 
       {quizzes.length === 0 ? (
         <View style={styles.emptyState}>
-          <Image source={brasaoImage} style={styles.emptyBrasao} contentFit="contain" />
+          <MaterialIcons name="folder-open" size={64} color={colors.muted} />
           <Text style={[styles.emptyTitle, { color: colors.foreground }]}>
             Nenhum questionário ainda
           </Text>
@@ -223,10 +220,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     padding: 6,
-  },
-  headerBrasaoImg: {
-    width: 44,
-    height: 44,
   },
   headerTitle: {
     fontSize: 24,
@@ -319,12 +312,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     paddingHorizontal: 40,
     gap: 12,
-  },
-  emptyBrasao: {
-    width: 100,
-    height: 100,
-    marginBottom: 8,
-    opacity: 0.5,
   },
   emptyTitle: {
     fontSize: 18,

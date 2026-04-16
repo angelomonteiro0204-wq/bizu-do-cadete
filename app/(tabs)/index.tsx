@@ -8,14 +8,11 @@ import {
   StyleSheet,
 } from "react-native";
 import { useRouter, useFocusEffect } from "expo-router";
-import { Image } from "expo-image";
 import { ScreenContainer } from "@/components/screen-container";
 import { useColors } from "@/hooks/use-colors";
 import { getStats, getQuizzes, getAttempts, type AppStats } from "@/lib/quiz-store";
 import type { Quiz, QuizAttempt } from "@/shared/quiz-types";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
-
-const brasaoImage = require("@/assets/images/brasao-apmbb.png");
 
 export default function HomeScreen() {
   const colors = useColors();
@@ -62,20 +59,17 @@ export default function HomeScreen() {
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />
         }
       >
-        {/* Header with Brasão */}
+        {/* Header */}
         <View style={[styles.header, { backgroundColor: colors.primary }]}>
           <View style={styles.headerContent}>
             <View style={styles.headerTextBlock}>
-              <Text style={styles.headerGreeting}>Academia Barro Branco</Text>
+              <Text style={styles.headerGreeting}>Preparação Militar</Text>
               <Text style={styles.headerTitle}>Bizu do Cadete</Text>
-              <Text style={styles.headerSubtitle}>Polícia Militar do Estado de São Paulo</Text>
+              <Text style={styles.headerSubtitle}>Estude com questões inteligentes</Text>
             </View>
-            <View style={styles.brasaoContainer}>
-              <Image
-                source={brasaoImage}
-                style={styles.brasaoImage}
-                contentFit="contain"
-              />
+            <View style={styles.headerIconContainer}>
+              <MaterialIcons name="shield" size={28} color="#C9A84C" />
+              <MaterialIcons name="menu-book" size={20} color="#FFFFFF" style={styles.headerBookIcon} />
             </View>
           </View>
         </View>
@@ -183,19 +177,17 @@ export default function HomeScreen() {
           </View>
         )}
 
-        {/* Empty State with Brasão */}
+        {/* Empty State */}
         {recentQuizzes.length === 0 && recentAttempts.length === 0 && (
           <View style={styles.emptyState}>
-            <Image
-              source={brasaoImage}
-              style={styles.emptyBrasao}
-              contentFit="contain"
-            />
+            <View style={[styles.emptyIconContainer, { backgroundColor: colors.primary + "12" }]}>
+              <MaterialIcons name="school" size={48} color={colors.primary} />
+            </View>
             <Text style={[styles.emptyTitle, { color: colors.foreground }]}>
               Bem-vindo, Cadete!
             </Text>
             <Text style={[styles.emptyText, { color: colors.muted }]}>
-              Comece enviando um PDF ou PowerPoint para gerar seu primeiro questionário de estudos no estilo APMBB.
+              Comece enviando um PDF ou PowerPoint para gerar seu primeiro questionário de estudos.
             </Text>
           </View>
         )}
@@ -243,18 +235,17 @@ const styles = StyleSheet.create({
     fontWeight: "400",
     marginTop: 4,
   },
-  brasaoContainer: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
+  headerIconContainer: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
     backgroundColor: "rgba(255,255,255,0.15)",
     alignItems: "center",
     justifyContent: "center",
-    padding: 6,
   },
-  brasaoImage: {
-    width: 60,
-    height: 60,
+  headerBookIcon: {
+    position: "absolute",
+    bottom: 12,
   },
   statsContainer: {
     flexDirection: "row",
@@ -383,11 +374,13 @@ const styles = StyleSheet.create({
     paddingTop: 36,
     gap: 12,
   },
-  emptyBrasao: {
-    width: 120,
-    height: 120,
+  emptyIconContainer: {
+    width: 96,
+    height: 96,
+    borderRadius: 48,
+    alignItems: "center",
+    justifyContent: "center",
     marginBottom: 8,
-    opacity: 0.6,
   },
   emptyTitle: {
     fontSize: 20,

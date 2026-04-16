@@ -18,9 +18,6 @@ import { useColors } from "@/hooks/use-colors";
 import { trpc } from "@/lib/trpc";
 import { saveQuiz } from "@/lib/quiz-store";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
-import { Image } from "expo-image";
-
-const brasaoImage = require("@/assets/images/brasao-apmbb.png");
 
 export default function NewQuizScreen() {
   const colors = useColors();
@@ -133,7 +130,7 @@ export default function NewQuizScreen() {
               </Text>
             </View>
             <View style={styles.headerBrasao}>
-              <Image source={brasaoImage} style={styles.headerBrasaoImg} contentFit="contain" />
+              <MaterialIcons name="note-add" size={32} color="#FFFFFF" />
             </View>
           </View>
         </View>
@@ -315,10 +312,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     padding: 6,
-  },
-  headerBrasaoImg: {
-    width: 44,
-    height: 44,
   },
   headerTitle: {
     fontSize: 24,

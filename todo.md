@@ -26,3 +26,4 @@
 - [x] Gerar nova logo original com tema policial/estudos (sem brasão oficial)
 - [x] Atualizar headers das telas com ícone genérico policial/estudos
 - [x] Atualizar app.config.ts com nova logo
+- [x] BUG: Geração de questionário não está funcionando - corrigido parser JSON robusto para trailing commas

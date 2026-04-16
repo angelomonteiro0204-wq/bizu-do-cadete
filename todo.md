@@ -33,3 +33,10 @@
 - [x] Adicionar suporte a mais formatos: .txt, .ppt, .doc, .docx, .rtf, .xlsx, .odt, .odp, .ods, .md, .csv, .html, .xml, .json
 - [x] Atualizar file picker no frontend para aceitar novos formatos
 - [x] Adicionar aviso discreto sobre compatibilidade de formato na tela de upload
+- [x] Implementar modo simulado com cronômetro regressivo na tela de quiz
+- [x] Implementar categorização por matéria/disciplina nos questionários
+- [x] Implementar exportação de resultados em PDF
+- [x] Atualizar tela Home com badges de matéria e simulado
+- [x] Atualizar tela Histórico com filtro por matéria e badges
+- [x] Adicionar seletor de matéria na tela de novo questionário
+- [x] Adicionar opção de modo simulado (com/sem timer) na tela de novo questionário

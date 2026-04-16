@@ -122,9 +122,24 @@ export default function HomeScreen() {
                     <Text style={[styles.attemptTitle, { color: colors.foreground }]} numberOfLines={1}>
                       {attempt.quizTitle}
                     </Text>
-                    <Text style={[styles.attemptDate, { color: colors.muted }]}>
-                      {new Date(attempt.completedAt).toLocaleDateString("pt-BR")}
-                    </Text>
+                    <View style={styles.attemptMetaRow}>
+                      <Text style={[styles.attemptDate, { color: colors.muted }]}>
+                        {new Date(attempt.completedAt).toLocaleDateString("pt-BR")}
+                      </Text>
+                      {attempt.subject ? (
+                        <View style={[styles.subjectBadge, { backgroundColor: colors.primary + "15" }]}>
+                          <Text style={[styles.subjectBadgeText, { color: colors.primary }]} numberOfLines={1}>
+                            {attempt.subject}
+                          </Text>
+                        </View>
+                      ) : null}
+                      {attempt.isSimulated ? (
+                        <View style={[styles.simulatedBadge, { backgroundColor: colors.warning + "20" }]}>
+                          <MaterialIcons name="timer" size={10} color={colors.warning} />
+                          <Text style={[styles.simulatedBadgeText, { color: colors.warning }]}>Simulado</Text>
+                        </View>
+                      ) : null}
+                    </View>
                   </View>
                   <View
                     style={[
@@ -167,9 +182,18 @@ export default function HomeScreen() {
                   <Text style={[styles.quizTitle, { color: colors.foreground }]} numberOfLines={1}>
                     {quiz.title}
                   </Text>
-                  <Text style={[styles.quizMeta, { color: colors.muted }]}>
-                    {quiz.questions.length} questões
-                  </Text>
+                  <View style={styles.quizMetaRow}>
+                    <Text style={[styles.quizMeta, { color: colors.muted }]}>
+                      {quiz.questions.length} questões
+                    </Text>
+                    {quiz.subject ? (
+                      <View style={[styles.subjectBadge, { backgroundColor: colors.primary + "15" }]}>
+                        <Text style={[styles.subjectBadgeText, { color: colors.primary }]} numberOfLines={1}>
+                          {quiz.subject}
+                        </Text>
+                      </View>
+                    ) : null}
+                  </View>
                 </View>
                 <MaterialIcons name="chevron-right" size={20} color={colors.muted} />
               </TouchableOpacity>
@@ -207,15 +231,8 @@ const styles = StyleSheet.create({
     borderBottomLeftRadius: 24,
     borderBottomRightRadius: 24,
   },
-  headerContent: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  headerTextBlock: {
-    flex: 1,
-    paddingRight: 12,
-  },
+  headerContent: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
+  headerTextBlock: { flex: 1, paddingRight: 12 },
   headerGreeting: {
     fontSize: 11,
     color: "rgba(255,255,255,0.7)",
@@ -223,18 +240,8 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
     textTransform: "uppercase",
   },
-  headerTitle: {
-    fontSize: 26,
-    fontWeight: "800",
-    color: "#FFFFFF",
-    marginTop: 2,
-  },
-  headerSubtitle: {
-    fontSize: 11,
-    color: "rgba(255,255,255,0.6)",
-    fontWeight: "400",
-    marginTop: 4,
-  },
+  headerTitle: { fontSize: 26, fontWeight: "800", color: "#FFFFFF", marginTop: 2 },
+  headerSubtitle: { fontSize: 11, color: "rgba(255,255,255,0.6)", fontWeight: "400", marginTop: 4 },
   headerIconContainer: {
     width: 64,
     height: 64,
@@ -243,16 +250,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  headerBookIcon: {
-    position: "absolute",
-    bottom: 12,
-  },
-  statsContainer: {
-    flexDirection: "row",
-    paddingHorizontal: 16,
-    marginTop: -12,
-    gap: 10,
-  },
+  headerBookIcon: { position: "absolute", bottom: 12 },
+  statsContainer: { flexDirection: "row", paddingHorizontal: 16, marginTop: -12, gap: 10 },
   statCard: {
     flex: 1,
     alignItems: "center",
@@ -266,34 +265,12 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 2,
   },
-  statNumber: {
-    fontSize: 22,
-    fontWeight: "700",
-  },
-  statLabel: {
-    fontSize: 11,
-    fontWeight: "500",
-  },
-  section: {
-    paddingHorizontal: 16,
-    marginTop: 20,
-  },
-  sectionHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 12,
-  },
-  sectionTitle: {
-    fontSize: 17,
-    fontWeight: "700",
-    marginBottom: 12,
-  },
-  seeAll: {
-    fontSize: 14,
-    fontWeight: "600",
-    marginBottom: 12,
-  },
+  statNumber: { fontSize: 22, fontWeight: "700" },
+  statLabel: { fontSize: 11, fontWeight: "500" },
+  section: { paddingHorizontal: 16, marginTop: 20 },
+  sectionHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 12 },
+  sectionTitle: { fontSize: 17, fontWeight: "700", marginBottom: 12 },
+  seeAll: { fontSize: 14, fontWeight: "600", marginBottom: 12 },
   primaryButton: {
     flexDirection: "row",
     alignItems: "center",
@@ -307,12 +284,7 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 4,
   },
-  primaryButtonText: {
-    fontSize: 17,
-    fontWeight: "700",
-    color: "#FFFFFF",
-    flex: 1,
-  },
+  primaryButtonText: { fontSize: 17, fontWeight: "700", color: "#FFFFFF", flex: 1 },
   attemptCard: {
     flexDirection: "row",
     alignItems: "center",
@@ -321,26 +293,23 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     marginBottom: 8,
   },
-  attemptInfo: {
-    flex: 1,
-  },
-  attemptTitle: {
-    fontSize: 14,
-    fontWeight: "600",
-  },
-  attemptDate: {
-    fontSize: 12,
-    marginTop: 2,
-  },
-  attemptScore: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+  attemptInfo: { flex: 1 },
+  attemptTitle: { fontSize: 14, fontWeight: "600" },
+  attemptMetaRow: { flexDirection: "row", alignItems: "center", gap: 6, marginTop: 4, flexWrap: "wrap" },
+  attemptDate: { fontSize: 12 },
+  subjectBadge: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: 8 },
+  subjectBadgeText: { fontSize: 10, fontWeight: "600" },
+  simulatedBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 3,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
     borderRadius: 8,
   },
-  attemptScoreText: {
-    fontSize: 14,
-    fontWeight: "700",
-  },
+  simulatedBadgeText: { fontSize: 10, fontWeight: "600" },
+  attemptScore: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8 },
+  attemptScoreText: { fontSize: 14, fontWeight: "700" },
   quizCard: {
     flexDirection: "row",
     alignItems: "center",
@@ -350,30 +319,12 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     gap: 12,
   },
-  quizIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 10,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  quizInfo: {
-    flex: 1,
-  },
-  quizTitle: {
-    fontSize: 14,
-    fontWeight: "600",
-  },
-  quizMeta: {
-    fontSize: 12,
-    marginTop: 2,
-  },
-  emptyState: {
-    alignItems: "center",
-    paddingHorizontal: 40,
-    paddingTop: 36,
-    gap: 12,
-  },
+  quizIcon: { width: 40, height: 40, borderRadius: 10, alignItems: "center", justifyContent: "center" },
+  quizInfo: { flex: 1 },
+  quizTitle: { fontSize: 14, fontWeight: "600" },
+  quizMetaRow: { flexDirection: "row", alignItems: "center", gap: 6, marginTop: 2 },
+  quizMeta: { fontSize: 12 },
+  emptyState: { alignItems: "center", paddingHorizontal: 40, paddingTop: 36, gap: 12 },
   emptyIconContainer: {
     width: 96,
     height: 96,
@@ -382,14 +333,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     marginBottom: 8,
   },
-  emptyTitle: {
-    fontSize: 20,
-    fontWeight: "700",
-    textAlign: "center",
-  },
-  emptyText: {
-    fontSize: 14,
-    textAlign: "center",
-    lineHeight: 20,
-  },
+  emptyTitle: { fontSize: 20, fontWeight: "700", textAlign: "center" },
+  emptyText: { fontSize: 14, textAlign: "center", lineHeight: 20 },
 });

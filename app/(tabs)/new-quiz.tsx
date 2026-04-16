@@ -9,6 +9,7 @@ import {
   Alert,
   Platform,
   StyleSheet,
+  Switch,
 } from "react-native";
 import { useRouter } from "expo-router";
 import * as DocumentPicker from "expo-document-picker";
@@ -17,6 +18,7 @@ import { ScreenContainer } from "@/components/screen-container";
 import { useColors } from "@/hooks/use-colors";
 import { trpc } from "@/lib/trpc";
 import { saveQuiz } from "@/lib/quiz-store";
+import { SUBJECT_OPTIONS } from "@/shared/quiz-types";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 
 export default function NewQuizScreen() {
@@ -25,6 +27,10 @@ export default function NewQuizScreen() {
   const [file, setFile] = useState<DocumentPicker.DocumentPickerAsset | null>(null);
   const [title, setTitle] = useState("");
   const [questionCount, setQuestionCount] = useState("10");
+  const [subject, setSubject] = useState("");
+  const [showSubjects, setShowSubjects] = useState(false);
+  const [simulatedMode, setSimulatedMode] = useState(false);
+  const [timeLimitMinutes, setTimeLimitMinutes] = useState("30");
   const [loading, setLoading] = useState(false);
   const [progress, setProgress] = useState("");
 
@@ -113,16 +119,28 @@ export default function NewQuizScreen() {
         questionCount: count,
       });
 
+      // Add subject to quiz
+      if (subject) {
+        (quiz as any).subject = subject;
+      }
+
       setProgress("Salvando questionário...");
       await saveQuiz(quiz);
 
+      const quizId = quiz.id;
       setFile(null);
       setTitle("");
       setQuestionCount("10");
       setLoading(false);
       setProgress("");
 
-      router.push(`/quiz/${quiz.id}` as any);
+      // Navigate with simulated mode params if enabled
+      if (simulatedMode) {
+        const limitSec = Math.max(1, parseInt(timeLimitMinutes) || 30) * 60;
+        router.push(`/quiz/${quizId}?simulated=true&timeLimit=${limitSec}` as any);
+      } else {
+        router.push(`/quiz/${quizId}` as any);
+      }
     } catch (error: any) {
       setLoading(false);
       setProgress("");
@@ -145,7 +163,7 @@ export default function NewQuizScreen() {
                 Envie um documento para gerar questões automaticamente
               </Text>
             </View>
-            <View style={styles.headerBrasao}>
+            <View style={styles.headerIcon}>
               <MaterialIcons name="note-add" size={32} color="#FFFFFF" />
             </View>
           </View>
@@ -209,6 +227,82 @@ export default function NewQuizScreen() {
             </View>
           </View>
 
+          {/* Subject / Matéria */}
+          <View style={styles.fieldGroup}>
+            <Text style={[styles.label, { color: colors.foreground }]}>
+              Matéria / Disciplina
+            </Text>
+            <TouchableOpacity
+              style={[
+                styles.subjectPicker,
+                {
+                  backgroundColor: colors.surface,
+                  borderColor: subject ? colors.primary : colors.border,
+                },
+              ]}
+              onPress={() => setShowSubjects(!showSubjects)}
+              activeOpacity={0.7}
+              disabled={loading}
+            >
+              <MaterialIcons
+                name="school"
+                size={20}
+                color={subject ? colors.primary : colors.muted}
+              />
+              <Text
+                style={[
+                  styles.subjectPickerText,
+                  { color: subject ? colors.foreground : colors.muted },
+                ]}
+              >
+                {subject || "Selecione a matéria (opcional)"}
+              </Text>
+              <MaterialIcons
+                name={showSubjects ? "expand-less" : "expand-more"}
+                size={22}
+                color={colors.muted}
+              />
+            </TouchableOpacity>
+            {showSubjects && (
+              <View style={[styles.subjectList, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+                <TouchableOpacity
+                  style={[
+                    styles.subjectItem,
+                    !subject && { backgroundColor: colors.primary + "15" },
+                  ]}
+                  onPress={() => { setSubject(""); setShowSubjects(false); }}
+                >
+                  <Text style={[styles.subjectItemText, { color: colors.muted, fontStyle: "italic" }]}>
+                    Nenhuma (não categorizar)
+                  </Text>
+                </TouchableOpacity>
+                {SUBJECT_OPTIONS.map((s) => (
+                  <TouchableOpacity
+                    key={s}
+                    style={[
+                      styles.subjectItem,
+                      subject === s && { backgroundColor: colors.primary + "15" },
+                    ]}
+                    onPress={() => { setSubject(s); setShowSubjects(false); }}
+                  >
+                    <Text
+                      style={[
+                        styles.subjectItemText,
+                        { color: subject === s ? colors.primary : colors.foreground },
+                        subject === s && { fontWeight: "700" },
+                      ]}
+                    >
+                      {s}
+                    </Text>
+                    {subject === s && (
+                      <MaterialIcons name="check" size={18} color={colors.primary} />
+                    )}
+                  </TouchableOpacity>
+                ))}
+              </View>
+            )}
+          </View>
+
           {/* Title */}
           <View style={styles.fieldGroup}>
             <Text style={[styles.label, { color: colors.foreground }]}>
@@ -269,6 +363,67 @@ export default function NewQuizScreen() {
             </View>
           </View>
 
+          {/* Simulated Mode */}
+          <View style={[styles.simulatedCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+            <View style={styles.simulatedRow}>
+              <View style={styles.simulatedInfo}>
+                <View style={styles.simulatedTitleRow}>
+                  <MaterialIcons name="timer" size={20} color={colors.warning} />
+                  <Text style={[styles.simulatedTitle, { color: colors.foreground }]}>
+                    Modo Simulado
+                  </Text>
+                </View>
+                <Text style={[styles.simulatedDesc, { color: colors.muted }]}>
+                  Cronômetro regressivo como em prova real
+                </Text>
+              </View>
+              <Switch
+                value={simulatedMode}
+                onValueChange={setSimulatedMode}
+                trackColor={{ false: colors.border, true: colors.warning + "80" }}
+                thumbColor={simulatedMode ? colors.warning : colors.muted}
+                disabled={loading}
+              />
+            </View>
+            {simulatedMode && (
+              <View style={styles.timeLimitRow}>
+                <Text style={[styles.timeLimitLabel, { color: colors.foreground }]}>
+                  Tempo limite:
+                </Text>
+                <View style={styles.timeLimitOptions}>
+                  {[15, 30, 45, 60].map((m) => (
+                    <TouchableOpacity
+                      key={m}
+                      style={[
+                        styles.timeLimitButton,
+                        {
+                          backgroundColor:
+                            timeLimitMinutes === String(m) ? colors.warning : colors.background,
+                          borderColor:
+                            timeLimitMinutes === String(m) ? colors.warning : colors.border,
+                        },
+                      ]}
+                      onPress={() => setTimeLimitMinutes(String(m))}
+                      disabled={loading}
+                      activeOpacity={0.7}
+                    >
+                      <Text
+                        style={[
+                          styles.timeLimitText,
+                          {
+                            color: timeLimitMinutes === String(m) ? "#FFFFFF" : colors.foreground,
+                          },
+                        ]}
+                      >
+                        {m}min
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+            )}
+          </View>
+
           {/* Generate Button */}
           <TouchableOpacity
             style={[
@@ -322,85 +477,56 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
   },
-  headerTextBlock: {
-    flex: 1,
-    paddingRight: 12,
-  },
-  headerBrasao: {
+  headerTextBlock: { flex: 1, paddingRight: 12 },
+  headerIcon: {
     width: 56,
     height: 56,
     borderRadius: 28,
     backgroundColor: "rgba(255,255,255,0.15)",
     alignItems: "center",
     justifyContent: "center",
-    padding: 6,
   },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: "800",
-    color: "#FFFFFF",
-  },
-  headerSubtitle: {
-    fontSize: 14,
-    color: "rgba(255,255,255,0.8)",
-    marginTop: 4,
-    lineHeight: 20,
-  },
-  content: {
-    padding: 16,
-    gap: 20,
-  },
-  fieldGroup: {
-    gap: 8,
-  },
-  label: {
-    fontSize: 14,
-    fontWeight: "600",
-  },
-  filePicker: {
-    borderRadius: 16,
-    borderWidth: 2,
-    overflow: "hidden",
-  },
-  fileSelected: {
+  headerTitle: { fontSize: 24, fontWeight: "800", color: "#FFFFFF" },
+  headerSubtitle: { fontSize: 14, color: "rgba(255,255,255,0.8)", marginTop: 4, lineHeight: 20 },
+  content: { padding: 16, gap: 20 },
+  fieldGroup: { gap: 8 },
+  label: { fontSize: 14, fontWeight: "600" },
+  filePicker: { borderRadius: 16, borderWidth: 2, overflow: "hidden" },
+  fileSelected: { flexDirection: "row", alignItems: "center", padding: 14, gap: 12 },
+  fileIcon: { width: 48, height: 48, borderRadius: 12, alignItems: "center", justifyContent: "center" },
+  fileInfo: { flex: 1 },
+  fileName: { fontSize: 14, fontWeight: "600" },
+  fileSize: { fontSize: 12, marginTop: 2 },
+  removeFile: { padding: 4 },
+  fileEmpty: { alignItems: "center", paddingVertical: 32, gap: 8 },
+  fileEmptyText: { fontSize: 15, fontWeight: "600" },
+  fileEmptyHint: { fontSize: 12 },
+  formatHint: { flexDirection: "row", alignItems: "flex-start", gap: 6, marginTop: 8, paddingHorizontal: 4 },
+  formatHintText: { fontSize: 11, lineHeight: 16, flex: 1, fontStyle: "italic" },
+  subjectPicker: {
     flexDirection: "row",
     alignItems: "center",
-    padding: 14,
-    gap: 12,
-  },
-  fileIcon: {
-    width: 48,
-    height: 48,
     borderRadius: 12,
+    borderWidth: 1,
+    paddingHorizontal: 14,
+    paddingVertical: 14,
+    gap: 10,
+  },
+  subjectPickerText: { flex: 1, fontSize: 15 },
+  subjectList: {
+    borderRadius: 12,
+    borderWidth: 1,
+    maxHeight: 250,
+    overflow: "hidden",
+  },
+  subjectItem: {
+    flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 14,
+    paddingVertical: 12,
   },
-  fileInfo: {
-    flex: 1,
-  },
-  fileName: {
-    fontSize: 14,
-    fontWeight: "600",
-  },
-  fileSize: {
-    fontSize: 12,
-    marginTop: 2,
-  },
-  removeFile: {
-    padding: 4,
-  },
-  fileEmpty: {
-    alignItems: "center",
-    paddingVertical: 32,
-    gap: 8,
-  },
-  fileEmptyText: {
-    fontSize: 15,
-    fontWeight: "600",
-  },
-  fileEmptyHint: {
-    fontSize: 12,
-  },
+  subjectItemText: { fontSize: 14 },
   textInput: {
     borderRadius: 12,
     borderWidth: 1,
@@ -408,10 +534,7 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     fontSize: 15,
   },
-  counterRow: {
-    flexDirection: "row",
-    gap: 10,
-  },
+  counterRow: { flexDirection: "row", gap: 10 },
   counterButton: {
     flex: 1,
     alignItems: "center",
@@ -419,10 +542,33 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     borderWidth: 1,
   },
-  counterText: {
-    fontSize: 16,
-    fontWeight: "700",
+  counterText: { fontSize: 16, fontWeight: "700" },
+  simulatedCard: {
+    borderRadius: 16,
+    borderWidth: 1,
+    padding: 16,
+    gap: 14,
   },
+  simulatedRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  simulatedInfo: { flex: 1, paddingRight: 12 },
+  simulatedTitleRow: { flexDirection: "row", alignItems: "center", gap: 8 },
+  simulatedTitle: { fontSize: 15, fontWeight: "700" },
+  simulatedDesc: { fontSize: 12, marginTop: 4, lineHeight: 18 },
+  timeLimitRow: { gap: 8 },
+  timeLimitLabel: { fontSize: 13, fontWeight: "600" },
+  timeLimitOptions: { flexDirection: "row", gap: 8 },
+  timeLimitButton: {
+    flex: 1,
+    alignItems: "center",
+    paddingVertical: 10,
+    borderRadius: 10,
+    borderWidth: 1,
+  },
+  timeLimitText: { fontSize: 13, fontWeight: "700" },
   generateButton: {
     paddingVertical: 16,
     borderRadius: 16,
@@ -434,38 +580,8 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 4,
   },
-  generateButtonText: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: "#FFFFFF",
-  },
-  loadingRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-  },
-  loadingHint: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    gap: 8,
-    paddingHorizontal: 4,
-  },
-  loadingHintText: {
-    fontSize: 12,
-    lineHeight: 18,
-    flex: 1,
-  },
-  formatHint: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    gap: 6,
-    marginTop: 8,
-    paddingHorizontal: 4,
-  },
-  formatHintText: {
-    fontSize: 11,
-    lineHeight: 16,
-    flex: 1,
-    fontStyle: "italic",
-  },
+  generateButtonText: { fontSize: 16, fontWeight: "700", color: "#FFFFFF" },
+  loadingRow: { flexDirection: "row", alignItems: "center", gap: 10 },
+  loadingHint: { flexDirection: "row", alignItems: "flex-start", gap: 8, paddingHorizontal: 4 },
+  loadingHintText: { fontSize: 12, lineHeight: 18, flex: 1 },
 });

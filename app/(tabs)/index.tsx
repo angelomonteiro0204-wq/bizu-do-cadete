@@ -8,11 +8,14 @@ import {
   StyleSheet,
 } from "react-native";
 import { useRouter, useFocusEffect } from "expo-router";
+import { Image } from "expo-image";
 import { ScreenContainer } from "@/components/screen-container";
 import { useColors } from "@/hooks/use-colors";
 import { getStats, getQuizzes, getAttempts, type AppStats } from "@/lib/quiz-store";
 import type { Quiz, QuizAttempt } from "@/shared/quiz-types";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+
+const brasaoImage = require("@/assets/images/brasao-apmbb.png");
 
 export default function HomeScreen() {
   const colors = useColors();
@@ -59,15 +62,20 @@ export default function HomeScreen() {
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />
         }
       >
-        {/* Header */}
+        {/* Header with Brasão */}
         <View style={[styles.header, { backgroundColor: colors.primary }]}>
           <View style={styles.headerContent}>
-            <View>
+            <View style={styles.headerTextBlock}>
               <Text style={styles.headerGreeting}>Academia Barro Branco</Text>
               <Text style={styles.headerTitle}>Bizu do Cadete</Text>
+              <Text style={styles.headerSubtitle}>Polícia Militar do Estado de São Paulo</Text>
             </View>
-            <View style={[styles.headerBadge, { backgroundColor: "rgba(255,255,255,0.2)" }]}>
-              <MaterialIcons name="school" size={32} color="#FFFFFF" />
+            <View style={styles.brasaoContainer}>
+              <Image
+                source={brasaoImage}
+                style={styles.brasaoImage}
+                contentFit="contain"
+              />
             </View>
           </View>
         </View>
@@ -175,15 +183,19 @@ export default function HomeScreen() {
           </View>
         )}
 
-        {/* Empty State */}
+        {/* Empty State with Brasão */}
         {recentQuizzes.length === 0 && recentAttempts.length === 0 && (
           <View style={styles.emptyState}>
-            <MaterialIcons name="school" size={64} color={colors.muted} />
+            <Image
+              source={brasaoImage}
+              style={styles.emptyBrasao}
+              contentFit="contain"
+            />
             <Text style={[styles.emptyTitle, { color: colors.foreground }]}>
               Bem-vindo, Cadete!
             </Text>
             <Text style={[styles.emptyText, { color: colors.muted }]}>
-              Comece enviando um PDF ou PowerPoint para gerar seu primeiro questionário de estudos.
+              Comece enviando um PDF ou PowerPoint para gerar seu primeiro questionário de estudos no estilo APMBB.
             </Text>
           </View>
         )}
@@ -199,7 +211,7 @@ const styles = StyleSheet.create({
   header: {
     paddingHorizontal: 20,
     paddingTop: 16,
-    paddingBottom: 24,
+    paddingBottom: 28,
     borderBottomLeftRadius: 24,
     borderBottomRightRadius: 24,
   },
@@ -208,11 +220,15 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
   },
+  headerTextBlock: {
+    flex: 1,
+    paddingRight: 12,
+  },
   headerGreeting: {
-    fontSize: 13,
-    color: "rgba(255,255,255,0.8)",
-    fontWeight: "500",
-    letterSpacing: 0.5,
+    fontSize: 11,
+    color: "rgba(255,255,255,0.7)",
+    fontWeight: "600",
+    letterSpacing: 1,
     textTransform: "uppercase",
   },
   headerTitle: {
@@ -221,12 +237,24 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     marginTop: 2,
   },
-  headerBadge: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
+  headerSubtitle: {
+    fontSize: 11,
+    color: "rgba(255,255,255,0.6)",
+    fontWeight: "400",
+    marginTop: 4,
+  },
+  brasaoContainer: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    backgroundColor: "rgba(255,255,255,0.15)",
     alignItems: "center",
     justifyContent: "center",
+    padding: 6,
+  },
+  brasaoImage: {
+    width: 60,
+    height: 60,
   },
   statsContainer: {
     flexDirection: "row",
@@ -352,8 +380,14 @@ const styles = StyleSheet.create({
   emptyState: {
     alignItems: "center",
     paddingHorizontal: 40,
-    paddingTop: 48,
+    paddingTop: 36,
     gap: 12,
+  },
+  emptyBrasao: {
+    width: 120,
+    height: 120,
+    marginBottom: 8,
+    opacity: 0.6,
   },
   emptyTitle: {
     fontSize: 20,

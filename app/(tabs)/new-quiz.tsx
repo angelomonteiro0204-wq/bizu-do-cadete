@@ -18,6 +18,9 @@ import { useColors } from "@/hooks/use-colors";
 import { trpc } from "@/lib/trpc";
 import { saveQuiz } from "@/lib/quiz-store";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import { Image } from "expo-image";
+
+const brasaoImage = require("@/assets/images/brasao-apmbb.png");
 
 export default function NewQuizScreen() {
   const colors = useColors();
@@ -122,10 +125,17 @@ export default function NewQuizScreen() {
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {/* Header */}
         <View style={[styles.header, { backgroundColor: colors.primary }]}>
-          <Text style={styles.headerTitle}>Novo Questionário</Text>
-          <Text style={styles.headerSubtitle}>
-            Envie um PDF ou PowerPoint para gerar questões automaticamente
-          </Text>
+          <View style={styles.headerRow}>
+            <View style={styles.headerTextBlock}>
+              <Text style={styles.headerTitle}>Novo Questionário</Text>
+              <Text style={styles.headerSubtitle}>
+                Envie um PDF ou PowerPoint para gerar questões automaticamente
+              </Text>
+            </View>
+            <View style={styles.headerBrasao}>
+              <Image source={brasaoImage} style={styles.headerBrasaoImg} contentFit="contain" />
+            </View>
+          </View>
         </View>
 
         <View style={styles.content}>
@@ -287,6 +297,28 @@ const styles = StyleSheet.create({
     paddingBottom: 24,
     borderBottomLeftRadius: 24,
     borderBottomRightRadius: 24,
+  },
+  headerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  headerTextBlock: {
+    flex: 1,
+    paddingRight: 12,
+  },
+  headerBrasao: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: "rgba(255,255,255,0.15)",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 6,
+  },
+  headerBrasaoImg: {
+    width: 44,
+    height: 44,
   },
   headerTitle: {
     fontSize: 24,

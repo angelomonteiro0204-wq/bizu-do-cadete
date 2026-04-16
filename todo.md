@@ -17,3 +17,7 @@
 - [x] Implementar modo refazer questionário
 - [x] Gerar logo do app
 - [x] Atualizar app.config.ts com nome e branding
+- [x] Integrar brasão da APMBB como imagem no app (header, splash)
+- [x] Gerar nova logo do app incorporando o brasão da APMBB
+- [x] Atualizar tela Home com brasão da APMBB no header
+- [x] Atualizar app.config.ts com nova logo

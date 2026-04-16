@@ -14,6 +14,9 @@ import { useColors } from "@/hooks/use-colors";
 import { getQuizzes, deleteQuiz, getAttemptsByQuizId } from "@/lib/quiz-store";
 import type { Quiz, QuizAttempt } from "@/shared/quiz-types";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import { Image } from "expo-image";
+
+const brasaoImage = require("@/assets/images/brasao-apmbb.png");
 
 interface QuizWithAttempts extends Quiz {
   lastAttempt?: QuizAttempt;
@@ -156,16 +159,23 @@ export default function HistoryScreen() {
     <ScreenContainer>
       {/* Header */}
       <View style={[styles.header, { backgroundColor: colors.primary }]}>
-        <Text style={styles.headerTitle}>Histórico</Text>
-        <Text style={styles.headerSubtitle}>
-          {quizzes.length} questionário{quizzes.length !== 1 ? "s" : ""} salvo
-          {quizzes.length !== 1 ? "s" : ""}
-        </Text>
+        <View style={styles.headerRow}>
+          <View style={styles.headerTextBlock}>
+            <Text style={styles.headerTitle}>Histórico</Text>
+            <Text style={styles.headerSubtitle}>
+              {quizzes.length} questionário{quizzes.length !== 1 ? "s" : ""} salvo
+              {quizzes.length !== 1 ? "s" : ""}
+            </Text>
+          </View>
+          <View style={styles.headerBrasao}>
+            <Image source={brasaoImage} style={styles.headerBrasaoImg} contentFit="contain" />
+          </View>
+        </View>
       </View>
 
       {quizzes.length === 0 ? (
         <View style={styles.emptyState}>
-          <MaterialIcons name="history" size={64} color={colors.muted} />
+          <Image source={brasaoImage} style={styles.emptyBrasao} contentFit="contain" />
           <Text style={[styles.emptyTitle, { color: colors.foreground }]}>
             Nenhum questionário ainda
           </Text>
@@ -195,6 +205,28 @@ const styles = StyleSheet.create({
     paddingBottom: 24,
     borderBottomLeftRadius: 24,
     borderBottomRightRadius: 24,
+  },
+  headerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  headerTextBlock: {
+    flex: 1,
+    paddingRight: 12,
+  },
+  headerBrasao: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: "rgba(255,255,255,0.15)",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 6,
+  },
+  headerBrasaoImg: {
+    width: 44,
+    height: 44,
   },
   headerTitle: {
     fontSize: 24,
@@ -287,6 +319,12 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     paddingHorizontal: 40,
     gap: 12,
+  },
+  emptyBrasao: {
+    width: 100,
+    height: 100,
+    marginBottom: 8,
+    opacity: 0.5,
   },
   emptyTitle: {
     fontSize: 18,

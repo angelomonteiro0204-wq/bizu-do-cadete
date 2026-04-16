@@ -2,7 +2,8 @@ import { z } from "zod";
 import { COOKIE_NAME } from "../shared/const.js";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
-import { publicProcedure, router } from "./_core/trpc";
+import { publicProcedure, protectedProcedure, adminProcedure, router } from "./_core/trpc";
+import * as db from "./db";
 import { invokeLLM } from "./_core/llm";
 import { PDFParse } from "pdf-parse";
 // @ts-ignore - officeparser typing issue
@@ -281,6 +282,153 @@ export const appRouter = router({
     }),
   }),
 
+  // =============================================
+  // SUBSCRIPTION - check user's subscription status
+  // =============================================
+  subscription: router({
+    /** Check current user's subscription status */
+    myStatus: protectedProcedure.query(async ({ ctx }) => {
+      // First, expire any overdue subscriptions
+      await db.expireOverdueSubscriptions();
+      const sub = await db.getActiveSubscription(ctx.user.id);
+      return {
+        hasActiveSubscription: !!sub,
+        subscription: sub ? {
+          id: sub.id,
+          status: sub.status,
+          plan: sub.plan,
+          startDate: sub.startDate,
+          endDate: sub.endDate,
+          autoRenew: sub.autoRenew,
+        } : null,
+      };
+    }),
+
+    /** Get current user's payment history */
+    myPayments: protectedProcedure.query(async ({ ctx }) => {
+      return db.getUserPayments(ctx.user.id);
+    }),
+  }),
+
+  // =============================================
+  // ADMIN - manage users, subscriptions, payments
+  // =============================================
+  admin: router({
+    /** Dashboard stats */
+    stats: adminProcedure.query(async () => {
+      await db.expireOverdueSubscriptions();
+      return db.getAdminStats();
+    }),
+
+    /** List all users with their subscription status */
+    listUsers: adminProcedure.query(async () => {
+      const allUsers = await db.getAllUsers();
+      const result = [];
+      for (const u of allUsers) {
+        const sub = await db.getActiveSubscription(u.id);
+        result.push({
+          id: u.id,
+          openId: u.openId,
+          name: u.name,
+          email: u.email,
+          role: u.role,
+          createdAt: u.createdAt,
+          lastSignedIn: u.lastSignedIn,
+          subscription: sub ? {
+            id: sub.id,
+            status: sub.status,
+            plan: sub.plan,
+            endDate: sub.endDate,
+          } : null,
+        });
+      }
+      return result;
+    }),
+
+    /** Create/activate subscription for a user */
+    createSubscription: adminProcedure
+      .input(z.object({
+        userId: z.number(),
+        plan: z.string().default("Mensal"),
+        durationDays: z.number().min(1).max(365).default(30),
+        priceCents: z.number().min(0).default(0),
+        notes: z.string().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const user = await db.getUserById(input.userId);
+        if (!user) throw new Error("Usuário não encontrado");
+
+        const now = new Date();
+        const endDate = new Date(now.getTime() + input.durationDays * 24 * 60 * 60 * 1000);
+
+        const subId = await db.createSubscription({
+          userId: input.userId,
+          status: "active",
+          startDate: now,
+          endDate,
+          plan: input.plan,
+          priceCents: input.priceCents,
+          notes: input.notes ?? null,
+          autoRenew: false,
+        });
+
+        return { subscriptionId: subId, endDate: endDate.toISOString() };
+      }),
+
+    /** Renew/extend a subscription */
+    renewSubscription: adminProcedure
+      .input(z.object({
+        subscriptionId: z.number(),
+        durationDays: z.number().min(1).max(365).default(30),
+      }))
+      .mutation(async ({ input }) => {
+        return db.renewSubscription(input.subscriptionId, input.durationDays);
+      }),
+
+    /** Cancel/deactivate a subscription */
+    cancelSubscription: adminProcedure
+      .input(z.object({ subscriptionId: z.number() }))
+      .mutation(async ({ input }) => {
+        await db.updateSubscriptionStatus(input.subscriptionId, "cancelled");
+        return { success: true };
+      }),
+
+    /** Record a payment */
+    recordPayment: adminProcedure
+      .input(z.object({
+        userId: z.number(),
+        subscriptionId: z.number().optional(),
+        amountCents: z.number().min(0),
+        method: z.string().optional(),
+        notes: z.string().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const paymentId = await db.createPayment({
+          userId: input.userId,
+          subscriptionId: input.subscriptionId ?? null,
+          amountCents: input.amountCents,
+          method: input.method ?? null,
+          status: "confirmed",
+          notes: input.notes ?? null,
+        });
+        return { paymentId };
+      }),
+
+    /** List all payments */
+    listPayments: adminProcedure.query(async () => {
+      return db.getAllPayments();
+    }),
+
+    /** Get all subscriptions */
+    listSubscriptions: adminProcedure.query(async () => {
+      await db.expireOverdueSubscriptions();
+      return db.getAllSubscriptions();
+    }),
+  }),
+
+  // =============================================
+  // QUIZ
+  // =============================================
   quiz: router({
     /** Get list of supported file extensions */
     supportedFormats: publicProcedure.query(() => {

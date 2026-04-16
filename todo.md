@@ -41,3 +41,12 @@
 - [x] Adicionar seletor de matéria na tela de novo questionário
 - [x] Adicionar opção de modo simulado (com/sem timer) na tela de novo questionário
 - [x] BUG: Build APK falha porque 'do' no namespace é palavra reservada Java - corrigido: 'bizu.do.cadete' -> 'bizu.docadete'
+- [x] Criar schema de banco de dados para usuários e assinaturas (subscriptions, payments)
+- [x] Implementar rotas backend: subscription.myStatus, admin.stats/listUsers/createSubscription/cancelSubscription/recordPayment/listPayments
+- [x] Implementar funções de banco: expireOverdueSubscriptions (bloqueio automático)
+- [x] Criar tela de Login com OAuth
+- [x] Criar tela de Bloqueio por assinatura expirada/inativa
+- [x] Criar Painel Administrativo (dashboard, gerenciar usuários, pagamentos)
+- [x] Implementar AuthGateProvider com verificação de assinatura e redirecionamento automático
+- [x] Adicionar botão de admin na Home (visível apenas para admins)
+- [x] Adicionar botão de logout na Home

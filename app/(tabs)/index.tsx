@@ -13,10 +13,12 @@ import { useColors } from "@/hooks/use-colors";
 import { getStats, getQuizzes, getAttempts, type AppStats } from "@/lib/quiz-store";
 import type { Quiz, QuizAttempt } from "@/shared/quiz-types";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import { useAuthGate } from "@/lib/auth-context";
 
 export default function HomeScreen() {
   const colors = useColors();
   const router = useRouter();
+  const { isAdmin, user, logout } = useAuthGate();
   const [stats, setStats] = useState<AppStats>({
     totalQuizzes: 0,
     totalQuestions: 0,
@@ -67,9 +69,23 @@ export default function HomeScreen() {
               <Text style={styles.headerTitle}>Bizu do Cadete</Text>
               <Text style={styles.headerSubtitle}>Estude com questões inteligentes</Text>
             </View>
-            <View style={styles.headerIconContainer}>
-              <MaterialIcons name="shield" size={28} color="#C9A84C" />
-              <MaterialIcons name="menu-book" size={20} color="#FFFFFF" style={styles.headerBookIcon} />
+            <View style={styles.headerActions}>
+              {isAdmin && (
+                <TouchableOpacity
+                  style={styles.adminBtn}
+                  onPress={() => router.push("/admin" as any)}
+                  activeOpacity={0.7}
+                >
+                  <MaterialIcons name="admin-panel-settings" size={22} color="#C8A84E" />
+                </TouchableOpacity>
+              )}
+              <TouchableOpacity
+                style={styles.logoutBtn}
+                onPress={logout}
+                activeOpacity={0.7}
+              >
+                <MaterialIcons name="logout" size={20} color="#FFFFFF" />
+              </TouchableOpacity>
             </View>
           </View>
         </View>
@@ -242,15 +258,27 @@ const styles = StyleSheet.create({
   },
   headerTitle: { fontSize: 26, fontWeight: "800", color: "#FFFFFF", marginTop: 2 },
   headerSubtitle: { fontSize: 11, color: "rgba(255,255,255,0.6)", fontWeight: "400", marginTop: 4 },
-  headerIconContainer: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
+  headerActions: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  adminBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     backgroundColor: "rgba(255,255,255,0.15)",
     alignItems: "center",
     justifyContent: "center",
   },
-  headerBookIcon: { position: "absolute", bottom: 12 },
+  logoutBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "rgba(255,255,255,0.15)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
   statsContainer: { flexDirection: "row", paddingHorizontal: 16, marginTop: -12, gap: 10 },
   statCard: {
     flex: 1,

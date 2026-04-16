@@ -37,6 +37,22 @@ export default function NewQuizScreen() {
           "application/pdf",
           "application/vnd.openxmlformats-officedocument.presentationml.presentation",
           "application/vnd.ms-powerpoint",
+          "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+          "application/msword",
+          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+          "application/vnd.ms-excel",
+          "application/vnd.oasis.opendocument.text",
+          "application/vnd.oasis.opendocument.presentation",
+          "application/vnd.oasis.opendocument.spreadsheet",
+          "application/rtf",
+          "text/rtf",
+          "text/plain",
+          "text/markdown",
+          "text/csv",
+          "text/html",
+          "text/xml",
+          "application/json",
+          "application/xml",
         ],
         copyToCacheDirectory: true,
       });
@@ -51,7 +67,7 @@ export default function NewQuizScreen() {
 
   const generateQuiz = async () => {
     if (!file) {
-      Alert.alert("Atenção", "Selecione um arquivo PDF ou PowerPoint primeiro.");
+      Alert.alert("Atenção", "Selecione um arquivo primeiro.");
       return;
     }
 
@@ -126,7 +142,7 @@ export default function NewQuizScreen() {
             <View style={styles.headerTextBlock}>
               <Text style={styles.headerTitle}>Novo Questionário</Text>
               <Text style={styles.headerSubtitle}>
-                Envie um PDF ou PowerPoint para gerar questões automaticamente
+                Envie um documento para gerar questões automaticamente
               </Text>
             </View>
             <View style={styles.headerBrasao}>
@@ -180,7 +196,7 @@ export default function NewQuizScreen() {
                     Toque para selecionar
                   </Text>
                   <Text style={[styles.fileEmptyHint, { color: colors.muted }]}>
-                    PDF ou PowerPoint (.pdf, .pptx, .ppt)
+                    PDF, PowerPoint, Word, TXT e outros formatos
                   </Text>
                 </View>
               )}

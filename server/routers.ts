@@ -10,7 +10,6 @@ import { parseOffice } from "officeparser";
 
 /**
  * Robustly parse JSON from LLM output.
- * Handles: markdown code blocks, trailing commas, BOM, control chars.
  */
 function parseJsonRobust(raw: string): any {
   let text = raw.trim();
@@ -20,23 +19,17 @@ function parseJsonRobust(raw: string): any {
   }
   text = text.replace(/^\uFEFF/, "");
 
-  try {
-    return JSON.parse(text);
-  } catch (_) {}
+  try { return JSON.parse(text); } catch (_) {}
 
   text = text.replace(/,\s*([\]}])/g, "$1");
   text = text.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g, "");
 
-  try {
-    return JSON.parse(text);
-  } catch (_) {}
+  try { return JSON.parse(text); } catch (_) {}
 
   const objMatch = text.match(/\{[\s\S]*\}/);
   if (objMatch) {
     const cleaned = objMatch[0].replace(/,\s*([\]}])/g, "$1");
-    try {
-      return JSON.parse(cleaned);
-    } catch (_) {}
+    try { return JSON.parse(cleaned); } catch (_) {}
   }
 
   throw new Error("Não foi possível interpretar a resposta da IA como JSON válido.");
@@ -53,13 +46,9 @@ function extractLLMContent(response: any): string {
     throw new Error("A IA retornou uma resposta inesperada. Tente novamente.");
   }
   const message = choices[0]?.message;
-  if (!message) {
-    throw new Error("A IA não retornou uma mensagem válida.");
-  }
+  if (!message) throw new Error("A IA não retornou uma mensagem válida.");
   const content = message.content;
-  if (typeof content === "string") {
-    return content;
-  }
+  if (typeof content === "string") return content;
   if (Array.isArray(content)) {
     const textParts = content
       .filter((part: any) => part.type === "text" && typeof part.text === "string")
@@ -69,20 +58,58 @@ function extractLLMContent(response: any): string {
   throw new Error("A IA retornou conteúdo em formato não suportado.");
 }
 
+// =============================================
+// FILE TEXT EXTRACTION - Multiple format support
+// =============================================
+
+/** Supported file extensions and their categories */
+const FILE_CATEGORIES = {
+  pdf: [".pdf"],
+  office: [".pptx", ".ppt", ".docx", ".doc", ".xlsx", ".xls", ".odt", ".odp", ".ods", ".rtf"],
+  text: [".txt", ".md", ".csv", ".json", ".xml", ".html", ".htm", ".log"],
+} as const;
+
+function getFileExtension(fileName: string): string {
+  return fileName.toLowerCase().substring(fileName.lastIndexOf("."));
+}
+
+function getFileCategory(fileName: string, mimeType: string): "pdf" | "office" | "text" | "unknown" {
+  const ext = getFileExtension(fileName);
+
+  if (FILE_CATEGORIES.pdf.some(e => ext === e) || mimeType === "application/pdf") return "pdf";
+  if ((FILE_CATEGORIES.office as readonly string[]).some(e => ext === e) ||
+      mimeType.includes("officedocument") ||
+      mimeType.includes("msword") ||
+      mimeType.includes("ms-powerpoint") ||
+      mimeType.includes("ms-excel") ||
+      mimeType.includes("opendocument") ||
+      mimeType === "application/rtf" ||
+      mimeType === "text/rtf") return "office";
+  if ((FILE_CATEGORIES.text as readonly string[]).some(e => ext === e) ||
+      mimeType.startsWith("text/")) return "text";
+
+  return "unknown";
+}
+
+/** Get all supported extensions for display */
+function getSupportedExtensions(): string[] {
+  return [
+    ...FILE_CATEGORIES.pdf,
+    ...FILE_CATEGORIES.office,
+    ...FILE_CATEGORIES.text,
+  ];
+}
+
 /**
- * Extract text from PDF buffer using pdf-parse.
+ * Extract text from PDF buffer.
  */
 async function extractTextFromPdf(buffer: Buffer): Promise<string> {
   try {
     const uint8 = new Uint8Array(buffer);
     const parser = new PDFParse(uint8);
     const result = await parser.getText();
-    // result is { pages: [...], text: string | undefined, total: number }
     if (result && typeof result === "object") {
-      if (typeof (result as any).text === "string") {
-        return (result as any).text;
-      }
-      // Fallback: join text from pages
+      if (typeof (result as any).text === "string") return (result as any).text;
       if (Array.isArray((result as any).pages)) {
         return (result as any).pages.map((p: any) => p.text || "").join("\n");
       }
@@ -95,17 +122,71 @@ async function extractTextFromPdf(buffer: Buffer): Promise<string> {
 }
 
 /**
- * Extract text from PPTX buffer using officeparser.
+ * Extract text from Office documents (PPTX, DOCX, XLSX, ODP, ODT, ODS, RTF, PPT, DOC).
+ * officeparser returns an AST object with a .toText() method.
  */
-async function extractTextFromPptx(buffer: Buffer): Promise<string> {
+async function extractTextFromOffice(buffer: Buffer, fileName: string): Promise<string> {
   try {
-    const text = await parseOffice(buffer);
-    return typeof text === "string" ? text : "";
+    const result = await parseOffice(buffer);
+    // officeparser v5+ returns an AST object with toText() method
+    if (result && typeof result === "object" && typeof result.toText === "function") {
+      return result.toText();
+    }
+    // Fallback for older versions that return string directly
+    if (typeof result === "string") return result;
+    // Last resort: stringify
+    return String(result ?? "");
   } catch (err: any) {
-    console.error("[PPTX] Extraction error:", err.message);
-    throw new Error("Falha ao extrair texto do PowerPoint. Verifique se o arquivo não está corrompido.");
+    console.error(`[Office] Extraction error for "${fileName}":`, err.message);
+    const ext = getFileExtension(fileName);
+    throw new Error(
+      `Falha ao extrair texto do arquivo ${ext.toUpperCase()}. Verifique se o arquivo não está corrompido. ` +
+      `Formatos suportados: ${getSupportedExtensions().join(", ")}`
+    );
   }
 }
+
+/**
+ * Extract text from plain text files (TXT, MD, CSV, etc.).
+ */
+function extractTextFromPlainText(buffer: Buffer): string {
+  return buffer.toString("utf-8");
+}
+
+/**
+ * Master extraction function - routes to the correct extractor based on file type.
+ */
+async function extractText(buffer: Buffer, fileName: string, mimeType: string): Promise<string> {
+  const category = getFileCategory(fileName, mimeType);
+
+  switch (category) {
+    case "pdf":
+      return await extractTextFromPdf(buffer);
+    case "office":
+      return await extractTextFromOffice(buffer, fileName);
+    case "text":
+      return extractTextFromPlainText(buffer);
+    case "unknown":
+      // Try officeparser as a last resort
+      try {
+        const result = await parseOffice(buffer);
+        if (result && typeof result === "object" && typeof result.toText === "function") {
+          return result.toText();
+        }
+        if (typeof result === "string") return result;
+        return String(result ?? "");
+      } catch {
+        throw new Error(
+          `Formato de arquivo não suportado: "${getFileExtension(fileName)}". ` +
+          `Formatos aceitos: ${getSupportedExtensions().join(", ")}`
+        );
+      }
+  }
+}
+
+// =============================================
+// QUIZ GENERATION
+// =============================================
 
 const QUIZ_SYSTEM_PROMPT = (questionCount: number) => `Você é um especialista em elaboração de questões para concursos e provas militares, no estilo "Questionários APMBB" (Academia de Polícia Militar do Barro Branco). Sua tarefa é gerar questões de múltipla escolha com base no conteúdo fornecido.
 
@@ -153,6 +234,42 @@ function validateQuestions(questions: any[]): any[] {
   });
 }
 
+async function generateQuizFromText(text: string, fileName: string, title: string | undefined, questionCount: number) {
+  const response = await invokeLLM({
+    messages: [
+      { role: "system", content: QUIZ_SYSTEM_PROMPT(questionCount) },
+      {
+        role: "user",
+        content: `Com base no seguinte conteúdo extraído do arquivo "${fileName}", gere ${questionCount} questões no estilo Questionários APMBB. Aborde o conteúdo inteiramente, criando questões que cubram todos os tópicos apresentados:\n\n${text.substring(0, 30000)}`,
+      },
+    ],
+    response_format: { type: "json_object" },
+  });
+
+  const content = extractLLMContent(response);
+  const parsed = parseJsonRobust(content);
+  const rawQuestions = parsed.questions || parsed;
+
+  if (!Array.isArray(rawQuestions) || rawQuestions.length === 0) {
+    throw new Error("Falha ao gerar questões: formato inválido");
+  }
+
+  const questions = validateQuestions(rawQuestions);
+  const quizId = `quiz_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
+
+  return {
+    id: quizId,
+    title: title || `Questionário - ${fileName}`,
+    fileName,
+    questions,
+    createdAt: new Date().toISOString(),
+  };
+}
+
+// =============================================
+// ROUTES
+// =============================================
+
 export const appRouter = router({
   system: systemRouter,
   auth: router({
@@ -165,6 +282,18 @@ export const appRouter = router({
   }),
 
   quiz: router({
+    /** Get list of supported file extensions */
+    supportedFormats: publicProcedure.query(() => {
+      return {
+        extensions: getSupportedExtensions(),
+        categories: {
+          pdf: [...FILE_CATEGORIES.pdf],
+          office: [...FILE_CATEGORIES.office],
+          text: [...FILE_CATEGORIES.text],
+        },
+      };
+    }),
+
     generateFromText: publicProcedure
       .input(
         z.object({
@@ -175,37 +304,7 @@ export const appRouter = router({
         })
       )
       .mutation(async ({ input }) => {
-        const { text, fileName, title, questionCount } = input;
-
-        const response = await invokeLLM({
-          messages: [
-            { role: "system", content: QUIZ_SYSTEM_PROMPT(questionCount) },
-            {
-              role: "user",
-              content: `Com base no seguinte conteúdo extraído do arquivo "${fileName}", gere ${questionCount} questões no estilo Questionários APMBB:\n\n${text.substring(0, 30000)}`,
-            },
-          ],
-          response_format: { type: "json_object" },
-        });
-
-        const content = extractLLMContent(response);
-        const parsed = parseJsonRobust(content);
-        const rawQuestions = parsed.questions || parsed;
-
-        if (!Array.isArray(rawQuestions) || rawQuestions.length === 0) {
-          throw new Error("Falha ao gerar questões: formato inválido");
-        }
-
-        const questions = validateQuestions(rawQuestions);
-        const quizId = `quiz_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
-
-        return {
-          id: quizId,
-          title: title || `Questionário - ${fileName}`,
-          fileName,
-          questions,
-          createdAt: new Date().toISOString(),
-        };
+        return generateQuizFromText(input.text, input.fileName, input.title, input.questionCount);
       }),
 
     uploadAndGenerate: publicProcedure
@@ -223,69 +322,22 @@ export const appRouter = router({
 
         // Decode base64 to buffer
         const buffer = Buffer.from(fileBase64, "base64");
+        console.log(`[Quiz] Processing file "${fileName}" (${mimeType}, ${buffer.length} bytes)`);
 
-        // Determine file type
-        const isPdf = mimeType === "application/pdf" || fileName.toLowerCase().endsWith(".pdf");
-        const isPptx =
-          mimeType === "application/vnd.openxmlformats-officedocument.presentationml.presentation" ||
-          mimeType === "application/vnd.ms-powerpoint" ||
-          fileName.toLowerCase().endsWith(".pptx") ||
-          fileName.toLowerCase().endsWith(".ppt");
-
-        // Extract text server-side (no LLM needed for extraction)
-        let extractedText = "";
-        if (isPdf) {
-          extractedText = await extractTextFromPdf(buffer);
-        } else if (isPptx) {
-          extractedText = await extractTextFromPptx(buffer);
-        } else {
-          // Try officeparser as generic fallback
-          try {
-            const result = await parseOffice(buffer);
-            extractedText = typeof result === "string" ? result : String(result ?? "");
-          } catch {
-            throw new Error("Formato de arquivo não suportado. Envie um PDF ou PowerPoint.");
-          }
-        }
+        // Extract text using the master extraction function
+        const extractedText = await extractText(buffer, fileName, mimeType);
 
         if (!extractedText || extractedText.trim().length < 30) {
           throw new Error(
-            "Não foi possível extrair texto suficiente do arquivo. Verifique se o arquivo contém texto legível (não apenas imagens)."
+            "Não foi possível extrair texto suficiente do arquivo. " +
+            "Verifique se o arquivo contém texto legível (não apenas imagens). " +
+            `Formatos aceitos: ${getSupportedExtensions().join(", ")}`
           );
         }
 
         console.log(`[Quiz] Extracted ${extractedText.length} chars from "${fileName}"`);
 
-        // Generate quiz questions via LLM using extracted text
-        const quizResponse = await invokeLLM({
-          messages: [
-            { role: "system", content: QUIZ_SYSTEM_PROMPT(questionCount) },
-            {
-              role: "user",
-              content: `Com base no seguinte conteúdo extraído do arquivo "${fileName}", gere ${questionCount} questões no estilo Questionários APMBB. Aborde o conteúdo inteiramente, criando questões que cubram todos os tópicos apresentados:\n\n${extractedText.substring(0, 30000)}`,
-            },
-          ],
-          response_format: { type: "json_object" },
-        });
-
-        const quizContent = extractLLMContent(quizResponse);
-        const parsed = parseJsonRobust(quizContent);
-        const rawQuestions = parsed.questions || parsed;
-
-        if (!Array.isArray(rawQuestions) || rawQuestions.length === 0) {
-          throw new Error("Falha ao gerar questões: formato inválido");
-        }
-
-        const questions = validateQuestions(rawQuestions);
-        const quizId = `quiz_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
-
-        return {
-          id: quizId,
-          title: title || `Questionário - ${fileName}`,
-          fileName,
-          questions,
-          createdAt: new Date().toISOString(),
-        };
+        return generateQuizFromText(extractedText, fileName, title, questionCount);
       }),
   }),
 });

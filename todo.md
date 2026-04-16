@@ -29,3 +29,6 @@
 - [x] BUG: Geração de questionário não está funcionando - corrigido parser JSON robusto para trailing commas
 - [x] BUG: Erro "Cannot read properties of undefined (reading '0')" - corrigido: extração de texto agora é server-side com pdf-parse e officeparser
 - [x] Adicionar diversificação obrigatória de questões (seed aleatório + instruções de variação no prompt)
+- [x] BUG: Extração de texto do PowerPoint não está funcionando - corrigido usando toText() do officeparser
+- [x] Adicionar suporte a mais formatos: .txt, .ppt, .doc, .docx, .rtf, .xlsx, .odt, .odp, .ods, .md, .csv, .html, .xml, .json
+- [x] Atualizar file picker no frontend para aceitar novos formatos

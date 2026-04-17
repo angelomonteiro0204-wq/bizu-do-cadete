@@ -50,3 +50,4 @@
 - [x] Implementar AuthGateProvider com verificação de assinatura e redirecionamento automático
 - [x] Adicionar botão de admin na Home (visível apenas para admins)
 - [x] Adicionar botão de logout na Home
+- [x] BUG: Usuário administrador não está sendo reconhecido como admin no app - corrigido: fallback para primeiro usuário como admin + logs detalhados

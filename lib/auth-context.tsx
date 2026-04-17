@@ -50,25 +50,37 @@ export function AuthGateProvider({ children }: { children: React.ReactNode }) {
   // Determine admin status from the auth.me endpoint
   const meQuery = trpc.auth.me.useQuery(undefined, {
     enabled: isAuthenticated,
-    retry: 1,
+    retry: 3,
+    refetchInterval: 5000,
   });
 
   useEffect(() => {
     if (meQuery.data) {
-      setIsAdmin((meQuery.data as any)?.role === "admin");
+      const role = (meQuery.data as any)?.role;
+      const isAdminUser = role === "admin";
+      console.log(`[AuthGate] User role: ${role}, isAdmin: ${isAdminUser}`);
+      setIsAdmin(isAdminUser);
     } else {
+      console.log(`[AuthGate] No user data available`);
       setIsAdmin(false);
     }
   }, [meQuery.data]);
 
   const loading = authLoading || (isAuthenticated && (subQuery.isLoading || meQuery.isLoading));
 
+  if (isAuthenticated && meQuery.isError) {
+    console.warn(`[AuthGate] Error fetching user data:`, meQuery.error);
+  }
+
   const hasActiveSubscription = isAdmin || (subQuery.data?.hasActiveSubscription ?? false);
 
   const refreshSubscription = useCallback(() => {
+    console.log(`[AuthGate] Refreshing subscription and user data`);
     subQuery.refetch();
     meQuery.refetch();
   }, [subQuery, meQuery]);
+
+  console.log(`[AuthGate] State: loading=${loading}, isAuthenticated=${isAuthenticated}, isAdmin=${isAdmin}, hasActiveSubscription=${hasActiveSubscription}`);
 
   return (
     <AuthGateContext.Provider

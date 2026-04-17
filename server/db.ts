@@ -32,6 +32,7 @@ export async function upsertUser(user: InsertUser): Promise<void> {
     throw new Error("User openId is required for upsert");
   }
 
+  console.log(`[Auth] Upserting user: ${user.openId}`);
   const db = await getDb();
   if (!db) {
     console.warn("[Database] Cannot upsert user: database not available");
@@ -62,10 +63,22 @@ export async function upsertUser(user: InsertUser): Promise<void> {
     if (user.role !== undefined) {
       values.role = user.role;
       updateSet.role = user.role;
-    } else if (user.openId === ENV.ownerOpenId) {
+    } else if (user.openId === ENV.ownerOpenId && ENV.ownerOpenId) {
+      console.log(`[Auth] User ${user.openId} matched OWNER_OPEN_ID, setting as admin`);
       values.role = "admin";
       updateSet.role = "admin";
+    } else {
+      // Fallback: if no OWNER_OPEN_ID is set, make the first user admin
+      if (!ENV.ownerOpenId) {
+        const existingUsers = await db.select().from(users).limit(1);
+        if (existingUsers.length === 0) {
+          console.log(`[Auth] First user ${user.openId} - setting as admin (no OWNER_OPEN_ID configured)`);
+          values.role = "admin";
+          updateSet.role = "admin";
+        }
+      }
     }
+    console.log(`[Auth] User ${user.openId} upserted with role: ${values.role}, OWNER_OPEN_ID: ${ENV.ownerOpenId || "(not set)"}`);
 
     if (!values.lastSignedIn) {
       values.lastSignedIn = new Date();

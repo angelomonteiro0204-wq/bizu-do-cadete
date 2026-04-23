@@ -52,3 +52,6 @@
 - [x] Adicionar botão de logout na Home
 - [x] BUG: Usuário administrador não está sendo reconhecido como admin no app - corrigido: fallback para primeiro usuário como admin + logs detalhados
 - [x] Criar tela de debug integrada no app para diagnosticar admin/auth (acesso via gesto secreto: 5 toques)
+- [x] BUG CRÍTICO: Erro de OAuth redirect_uri - 'exp' scheme não permitido - corrigido: agora usa https:// em web
+- [x] BUG CRÍTICO: Erro de navegação entre telas - corrigido: adicionado delay e isNavigating flag
+- [x] BUG: Gesto secreto (5 toques) não está abrindo tela de debug - melhorado com logs e timeout maior

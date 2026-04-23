@@ -33,13 +33,16 @@ export default function HomeScreen() {
   const handleDebugTap = () => {
     setDebugTaps((prev) => {
       const newCount = prev + 1;
+      console.log(`[Debug] Tap count: ${newCount}`);
       if (newCount === 5) {
+        console.log(`[Debug] Opening debug screen`);
         router.push("/debug" as any);
-        setDebugTaps(0);
+        setTimeout(() => setDebugTaps(0), 500);
+      } else {
+        setTimeout(() => setDebugTaps(0), 3000);
       }
       return newCount;
     });
-    setTimeout(() => setDebugTaps(0), 2000);
   };
 
   const loadData = useCallback(async () => {

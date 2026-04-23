@@ -32,32 +32,50 @@ function NavigationGuard({ children }: { children: React.ReactNode }) {
   const { loading, isAuthenticated, hasActiveSubscription, isAdmin } = useAuthGate();
   const router = useRouter();
   const segments = useSegments();
+  const [lastRoute, setLastRoute] = useState<string>("");
+  const [isNavigating, setIsNavigating] = useState(false);
 
   useEffect(() => {
-    if (loading) return;
+    if (loading || isNavigating) return;
 
     const currentRoute = segments.join("/");
+
+    // Avoid redundant navigation
+    if (currentRoute === lastRoute) return;
 
     // Allow oauth callback to proceed
     if (currentRoute.startsWith("oauth")) return;
 
+    let nextRoute: string | null = null;
+
     if (!isAuthenticated) {
       // Not logged in -> go to login
       if (currentRoute !== "login") {
-        router.replace("/login" as any);
+        nextRoute = "/login";
       }
     } else if (!hasActiveSubscription && !isAdmin) {
       // Logged in but no active subscription and not admin -> blocked
       if (currentRoute !== "blocked" && currentRoute !== "login") {
-        router.replace("/blocked" as any);
+        nextRoute = "/blocked";
       }
     } else {
       // Authenticated with active subscription (or admin) -> go to tabs
       if (currentRoute === "login" || currentRoute === "blocked") {
-        router.replace("/(tabs)" as any);
+        nextRoute = "/(tabs)";
       }
     }
-  }, [loading, isAuthenticated, hasActiveSubscription, isAdmin, segments, router]);
+
+    if (nextRoute) {
+      setLastRoute(nextRoute);
+      setIsNavigating(true);
+      // Add small delay to ensure state is settled
+      const timer = setTimeout(() => {
+        router.replace(nextRoute as any);
+        setIsNavigating(false);
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [loading, isAuthenticated, hasActiveSubscription, isAdmin, segments, router, lastRoute, isNavigating]);
 
   if (loading) {
     return (
@@ -135,6 +153,7 @@ export default function RootLayout() {
                 <Stack.Screen name="(tabs)" />
                 <Stack.Screen name="quiz/[id]" options={{ animation: "slide_from_right" }} />
                 <Stack.Screen name="admin" options={{ animation: "slide_from_right", presentation: "fullScreenModal" }} />
+                <Stack.Screen name="debug" options={{ animation: "slide_from_right", presentation: "fullScreenModal" }} />
                 <Stack.Screen name="oauth/callback" />
               </Stack>
               <StatusBar style="auto" />

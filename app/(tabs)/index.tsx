@@ -28,6 +28,19 @@ export default function HomeScreen() {
   const [recentQuizzes, setRecentQuizzes] = useState<Quiz[]>([]);
   const [recentAttempts, setRecentAttempts] = useState<QuizAttempt[]>([]);
   const [refreshing, setRefreshing] = useState(false);
+  const [debugTaps, setDebugTaps] = useState(0);
+
+  const handleDebugTap = () => {
+    setDebugTaps((prev) => {
+      const newCount = prev + 1;
+      if (newCount === 5) {
+        router.push("/debug" as any);
+        setDebugTaps(0);
+      }
+      return newCount;
+    });
+    setTimeout(() => setDebugTaps(0), 2000);
+  };
 
   const loadData = useCallback(async () => {
     const [s, q, a] = await Promise.all([getStats(), getQuizzes(), getAttempts()]);
@@ -85,6 +98,15 @@ export default function HomeScreen() {
                 activeOpacity={0.7}
               >
                 <MaterialIcons name="logout" size={20} color="#FFFFFF" />
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.debugTap}
+                onPress={handleDebugTap}
+                activeOpacity={0.7}
+              >
+                <Text style={{ fontSize: 12, color: "#FFFFFF", opacity: 0.3 }}>
+                  {debugTaps > 0 ? debugTaps : ""}
+                </Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -275,9 +297,15 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: "rgba(255,255,255,0.15)",
-    alignItems: "center",
+    backgroundColor: "rgba(255, 255, 255, 0.2)",
     justifyContent: "center",
+    alignItems: "center",
+  },
+  debugTap: {
+    width: 30,
+    height: 30,
+    justifyContent: "center",
+    alignItems: "center",
   },
   statsContainer: { flexDirection: "row", paddingHorizontal: 16, marginTop: -12, gap: 10 },
   statCard: {

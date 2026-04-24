@@ -7,12 +7,16 @@ import { trpc } from "@/lib/trpc";
 import { useColors } from "@/hooks/use-colors";
 import { cn } from "@/lib/utils";
 import { useRouter } from "expo-router";
+import { useState } from "react";
+import { PaymentModal } from "@/components/payment-modal";
 
 export default function MyAccountScreen() {
   const router = useRouter();
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const { user, subscription, logout, isAdmin } = useAuthGate();
+  const { user, subscription, logout, isAdmin, refreshSubscription } = useAuthGate();
+  const [paymentModalVisible, setPaymentModalVisible] = useState(false);
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
 
   // Fetch payment history
   const paymentsQuery = trpc.subscription.myPayments.useQuery();
@@ -159,7 +163,7 @@ export default function MyAccountScreen() {
 
               {/* Days Remaining */}
               {subscription.status === "active" && (
-                <View className="flex-row items-center gap-2">
+                <View className="flex-row items-center gap-2 pt-3">
                   <MaterialIcons name="info" size={16} color={colors.warning} />
                   <Text className="text-xs text-muted flex-1">
                     Sua assinatura vence em{" "}
@@ -170,6 +174,17 @@ export default function MyAccountScreen() {
                   </Text>
                 </View>
               )}
+
+              {/* Renew Button */}
+              <TouchableOpacity
+                onPress={() => setPaymentModalVisible(true)}
+                disabled={isProcessingPayment}
+                className="mt-4 bg-primary rounded-lg py-3 items-center flex-row justify-center gap-2 active:opacity-80"
+                style={{ opacity: isProcessingPayment ? 0.6 : 1 }}
+              >
+                <MaterialIcons name="refresh" size={18} color={colors.background} />
+                <Text className="text-base font-semibold text-background">Renovar Assinatura</Text>
+              </TouchableOpacity>
             </View>
           ) : (
             <View className="bg-surface rounded-2xl p-6 border border-border items-center gap-3">
@@ -237,6 +252,20 @@ export default function MyAccountScreen() {
           </TouchableOpacity>
         </View>
       </ScrollView>
+
+      {/* Payment Modal */}
+      <PaymentModal
+        visible={paymentModalVisible}
+        onClose={() => setPaymentModalVisible(false)}
+        onSelectPaymentMethod={async (method) => {
+          // Placeholder: In production, integrate with Stripe/PIX
+          console.log("Payment method selected:", method);
+          setPaymentModalVisible(false);
+        }}
+        isLoading={isProcessingPayment}
+        planName="Mensal"
+        planPrice={9900}
+      />
     </ScreenContainer>
   );
 }

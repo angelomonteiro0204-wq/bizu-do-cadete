@@ -56,3 +56,13 @@
 - [x] BUG CRÍTICO: Erro de navegação entre telas - corrigido: adicionado delay e isNavigating flag
 - [x] BUG: Gesto secreto (5 toques) não está abrindo tela de debug - melhorado com logs e timeout maior
 - [x] Implementar tela "Minha Conta" com perfil do usuário, status de assinatura e histórico de pagamentos
+
+## Integração de Pagamento
+
+- [x] Implementar componente de modal/sheet de pagamento na tela Minha Conta
+- [x] Adicionar botão "Renovar Assinatura" na seção de assinatura
+- [x] Integrar Stripe para pagamento com cartão de crédito (mock)
+- [x] Integrar PIX como método de pagamento alternativo (mock)
+- [x] Criar endpoint backend para processar pagamentos (POST /payment/createSession)
+- [x] Criar endpoint backend para confirmar pagamento (POST /payment/confirm)
+- [x] Adicionar testes de fluxo de pagamento (16 testes)

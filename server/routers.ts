@@ -488,6 +488,93 @@ export const appRouter = router({
         return generateQuizFromText(extractedText, fileName, title, questionCount);
       }),
   }),
+
+  // =============================================
+  // PAYMENT - handle subscription renewals
+  // =============================================
+  payment: router({
+    /** Create a payment session for subscription renewal */
+    createSession: protectedProcedure
+      .input(z.object({
+        method: z.enum(["card", "pix"]),
+        planDurationDays: z.number().min(1).max(365).default(30),
+        amountCents: z.number().min(1).default(9900),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        // For card payments, return a mock Stripe session ID
+        // In production, you would call Stripe API here
+        if (input.method === "card") {
+          const sessionId = `cs_test_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+          return {
+            sessionId,
+            method: "card",
+            redirectUrl: `https://checkout.stripe.com/pay/${sessionId}`,
+            message: "Você será redirecionado para o Stripe para completar o pagamento",
+          };
+        }
+
+        // For PIX payments, return a mock QR code and payment ID
+        if (input.method === "pix") {
+          const paymentId = `pix_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+          const qrCode = `00020126${paymentId}`;
+          const copyPasteKey = `00020126${paymentId}`;
+          return {
+            paymentId,
+            method: "pix",
+            qrCode,
+            copyPasteKey,
+            expiresIn: 3600,
+            message: "Escaneie o QR code ou copie a chave PIX para pagar",
+          };
+        }
+
+        throw new Error("Metodo de pagamento invalido");
+      }),
+
+    /** Confirm payment and activate subscription */
+    confirm: protectedProcedure
+      .input(z.object({
+        method: z.enum(["card", "pix"]),
+        sessionId: z.string().optional(),
+        paymentId: z.string().optional(),
+        planDurationDays: z.number().min(1).max(365).default(30),
+        amountCents: z.number().min(1).default(9900),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        // Verify payment (in production, verify with Stripe/PIX provider)
+        // For demo purposes, we'll just create the subscription
+
+        const now = new Date();
+        const endDate = new Date(now.getTime() + input.planDurationDays * 24 * 60 * 60 * 1000);
+
+        // Create subscription
+        const subId = await db.createSubscription({
+          userId: ctx.user.id,
+          status: "active",
+          startDate: now,
+          endDate,
+          plan: "Mensal",
+          priceCents: input.amountCents,
+        });
+
+        // Record payment
+        await db.createPayment({
+          userId: ctx.user.id,
+          subscriptionId: subId,
+          amountCents: input.amountCents,
+          method: input.method === "card" ? "Cartao de Credito" : "PIX",
+          status: "confirmed",
+          notes: `Pagamento de renovacao via ${input.method === "card" ? "Stripe" : "PIX"}`,
+        });
+
+        return {
+          success: true,
+          subscriptionId: subId,
+          endDate: endDate.toISOString(),
+          message: "Assinatura renovada com sucesso!",
+        };
+      }),
+  }),
 });
 
 export type AppRouter = typeof appRouter;

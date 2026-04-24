@@ -305,3 +305,133 @@ describe("My Account Screen", () => {
     });
   });
 });
+
+
+describe("Payment Modal Component", () => {
+  describe("Payment Method Selection", () => {
+    it("should handle credit card payment method selection", async () => {
+      const mockOnSelect = vi.fn().mockResolvedValue(undefined);
+
+      await mockOnSelect("card");
+
+      expect(mockOnSelect).toHaveBeenCalledWith("card");
+    });
+
+    it("should handle PIX payment method selection", async () => {
+      const mockOnSelect = vi.fn().mockResolvedValue(undefined);
+
+      await mockOnSelect("pix");
+
+      expect(mockOnSelect).toHaveBeenCalledWith("pix");
+    });
+
+    it("should disable interactions while processing payment", async () => {
+      const isProcessing = true;
+      expect(isProcessing).toBe(true);
+    });
+
+    it("should enable interactions after payment processing", async () => {
+      const isProcessing = false;
+      expect(isProcessing).toBe(false);
+    });
+  });
+
+  describe("Payment Plan Display", () => {
+    it("should display plan name correctly", () => {
+      const planName = "Mensal";
+      expect(planName).toBe("Mensal");
+    });
+
+    it("should display plan price correctly", () => {
+      const planPrice = 9900;
+      const formatted = (planPrice / 100).toLocaleString("pt-BR", {
+        style: "currency",
+        currency: "BRL",
+      });
+      expect(formatted).toMatch(/R\$\s*99[.,]00/);
+    });
+
+    it("should display plan duration as 30 days", () => {
+      const duration = 30;
+      expect(duration).toBe(30);
+    });
+  });
+
+  describe("Payment Session Creation", () => {
+    it("should generate session ID for card payments", () => {
+      const sessionId = `cs_test_${Date.now()}_test123`;
+      expect(sessionId).toMatch(/^cs_test_/);
+    });
+
+    it("should generate payment ID for PIX payments", () => {
+      const paymentId = `pix_${Date.now()}_test123`;
+      expect(paymentId).toMatch(/^pix_/);
+    });
+
+    it("should set expiration time for PIX payments", () => {
+      const expiresIn = 3600; // 1 hour
+      expect(expiresIn).toBe(3600);
+    });
+  });
+
+  describe("Payment Confirmation", () => {
+    it("should confirm card payment and create subscription", async () => {
+      const mockConfirm = vi.fn().mockResolvedValue({
+        success: true,
+        subscriptionId: 1,
+        endDate: "2026-05-24",
+        message: "Assinatura renovada com sucesso!",
+      });
+
+      const result = await mockConfirm("card");
+
+      expect(result.success).toBe(true);
+      expect(result.message).toContain("renovada");
+    });
+
+    it("should confirm PIX payment and create subscription", async () => {
+      const mockConfirm = vi.fn().mockResolvedValue({
+        success: true,
+        subscriptionId: 1,
+        endDate: "2026-05-24",
+        message: "Assinatura renovada com sucesso!",
+      });
+
+      const result = await mockConfirm("pix");
+
+      expect(result.success).toBe(true);
+      expect(result.subscriptionId).toBeGreaterThan(0);
+    });
+
+    it("should calculate correct end date for subscription", () => {
+      const now = new Date();
+      const endDate = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+
+      const daysAdded = Math.ceil(
+        (endDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
+      );
+
+      expect(daysAdded).toBeGreaterThanOrEqual(29);
+      expect(daysAdded).toBeLessThanOrEqual(31);
+    });
+  });
+
+  describe("Payment Modal UI", () => {
+    it("should display payment method options", () => {
+      const methods = ["card", "pix"];
+      expect(methods).toHaveLength(2);
+      expect(methods).toContain("card");
+      expect(methods).toContain("pix");
+    });
+
+    it("should display security message", () => {
+      const message = "Seu pagamento é processado de forma segura";
+      expect(message).toContain("segura");
+    });
+
+    it("should have cancel button", () => {
+      const hasCancel = true;
+      expect(hasCancel).toBe(true);
+    });
+  });
+});

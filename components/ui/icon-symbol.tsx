@@ -20,6 +20,7 @@ const MAPPING = {
   "arrow.left": "arrow-back",
   "trash.fill": "delete",
   "square.and.arrow.up": "upload-file",
+  "person.fill": "person",
 } as IconMapping;
 
 export function IconSymbol({

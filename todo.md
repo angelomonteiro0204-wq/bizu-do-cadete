@@ -55,3 +55,4 @@
 - [x] BUG CRÍTICO: Erro de OAuth redirect_uri - 'exp' scheme não permitido - corrigido: agora usa https:// em web
 - [x] BUG CRÍTICO: Erro de navegação entre telas - corrigido: adicionado delay e isNavigating flag
 - [x] BUG: Gesto secreto (5 toques) não está abrindo tela de debug - melhorado com logs e timeout maior
+- [x] Implementar tela "Minha Conta" com perfil do usuário, status de assinatura e histórico de pagamentos

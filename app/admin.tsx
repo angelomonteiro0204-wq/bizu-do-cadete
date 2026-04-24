@@ -27,6 +27,7 @@ export default function AdminScreen() {
   const [payAmount, setPayAmount] = useState("29.90");
   const [payMethod, setPayMethod] = useState("PIX");
   const [payNotes, setPayNotes] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
 
   const statsQuery = trpc.admin.stats.useQuery(undefined, { enabled: activeTab === "stats" });
   const usersQuery = trpc.admin.listUsers.useQuery(undefined, { enabled: activeTab === "users" });
@@ -120,6 +121,14 @@ export default function AdminScreen() {
     const d = new Date(date);
     return d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" });
   };
+
+  const filteredUsers = (usersQuery.data || []).filter(
+    (user) =>
+      (user.name?.toLowerCase().includes(searchQuery.toLowerCase()) ??
+        false) ||
+      (user.email?.toLowerCase().includes(searchQuery.toLowerCase()) ??
+        false)
+  );
 
   const renderStats = () => {
     if (statsQuery.isLoading) return <ActivityIndicator size="large" color="#C8A84E" style={{ marginTop: 40 }} />;
@@ -226,8 +235,19 @@ export default function AdminScreen() {
     if (usersQuery.isLoading) return <ActivityIndicator size="large" color="#C8A84E" style={{ marginTop: 40 }} />;
 
     return (
-      <FlatList
-        data={usersQuery.data || []}
+      <View style={{ flex: 1 }}>
+        <View style={[styles.searchContainer, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+          <MaterialIcons name="search" size={20} color={colors.muted} />
+          <TextInput
+            style={[styles.searchInput, { color: colors.foreground }]}
+            placeholder="Buscar por nome ou email..."
+            placeholderTextColor={colors.muted}
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+          />
+        </View>
+        <FlatList
+          data={filteredUsers}
         keyExtractor={(item) => String(item.id)}
         renderItem={renderUserItem}
         contentContainerStyle={styles.listContent}
@@ -239,6 +259,7 @@ export default function AdminScreen() {
           </View>
         }
       />
+      </View>
     );
   };
 
@@ -603,6 +624,22 @@ const styles = StyleSheet.create({
   payNotes: { fontSize: 12, fontStyle: "italic" },
   emptyState: { alignItems: "center", paddingTop: 60, gap: 12 },
   emptyText: { fontSize: 14 },
+  searchContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    borderWidth: 1,
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    marginHorizontal: 12,
+    marginVertical: 12,
+    gap: 8,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 14,
+    paddingVertical: 4,
+  },
   // Modal styles
   modalOverlay: {
     flex: 1,

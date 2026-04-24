@@ -574,7 +574,7 @@ export const appRouter = router({
           message: "Assinatura renovada com sucesso!",
         };
       }),
-  }),
-});
+   }),
 
+});
 export type AppRouter = typeof appRouter;

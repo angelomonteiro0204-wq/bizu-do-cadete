@@ -66,3 +66,16 @@
 - [x] Criar endpoint backend para processar pagamentos (POST /payment/createSession)
 - [x] Criar endpoint backend para confirmar pagamento (POST /payment/confirm)
 - [x] Adicionar testes de fluxo de pagamento (16 testes)
+
+## Painel de Administração
+
+- [x] Criar tela de dashboard de admin com estatísticas (total de usuários, assinaturas ativas, receita)
+- [x] Implementar tela de gerenciamento de usuários (listar, editar, desativar, banir)
+- [x] Implementar tela de gerenciamento de assinaturas (visualizar, renovar, cancelar)
+- [x] Implementar tela de relatório de pagamentos (filtros por data, método, status)
+- [x] Criar endpoints backend para admin.stats (estatísticas gerais)
+- [x] Criar endpoints backend para admin.listUsers (listar usuários)
+- [x] Criar endpoints backend para admin.createSubscription (criar assinatura)
+- [x] Criar endpoints backend para admin.listPayments (relatório de pagamentos)
+- [x] Adicionar verificação de permissão de admin em todos os endpoints
+- [x] Adicionar barra de busca para filtrar usuários por nome/email

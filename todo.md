@@ -66,9 +66,3 @@
 - [x] Criar endpoint backend para processar pagamentos (POST /payment/createSession)
 - [x] Criar endpoint backend para confirmar pagamento (POST /payment/confirm)
 - [x] Adicionar testes de fluxo de pagamento (16 testes)
-
-## Correção de Logo
-
-- [x] Regenerar logo com melhor enquadramento (sem cortes)
-- [x] Atualizar app.config.ts com nova URL da logo
-- [x] Copiar logo para todos os arquivos de ícone (icon.png, splash-icon.png, favicon.png, android-icon-foreground.png)

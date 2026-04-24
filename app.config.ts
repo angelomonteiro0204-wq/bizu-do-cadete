@@ -37,7 +37,7 @@ const env = {
   appSlug: "bizu-do-cadete",
   // S3 URL of the app logo - set this to the URL returned by generate_image when creating custom logo
   // Leave empty to use the default icon from assets/images/icon.png
-  logoUrl: "https://d2xsxph8kpxj0f.cloudfront.net/310519663538599756/Aw9xoMMFEdGZdNpGTgZpJA/bizu-logo-v3-Wv2aZ5GaxecieBjwQ7ypyi.png",
+  logoUrl: "https://d2xsxph8kpxj0f.cloudfront.net/310519663538599756/Aw9xoMMFEdGZdNpGTgZpJA/icon-RWuv3hWjZygkiFNURn6Y6V.png",
   scheme: schemeFromBundleId,
   iosBundleId: bundleId,
   androidPackage: bundleId,
@@ -48,7 +48,7 @@ const config: ExpoConfig = {
   slug: env.appSlug,
   version: "1.0.0",
   orientation: "portrait",
-  icon: "./assets/images/icon.png",
+  icon: "https://d2xsxph8kpxj0f.cloudfront.net/310519663538599756/Aw9xoMMFEdGZdNpGTgZpJA/icon_67c14d7c.png",
   scheme: env.scheme,
   userInterfaceStyle: "automatic",
   newArchEnabled: true,
@@ -62,7 +62,7 @@ const config: ExpoConfig = {
   android: {
     adaptiveIcon: {
       backgroundColor: "#1B2A4A",
-      foregroundImage: "./assets/images/android-icon-foreground.png",
+      foregroundImage: "https://d2xsxph8kpxj0f.cloudfront.net/310519663538599756/Aw9xoMMFEdGZdNpGTgZpJA/android-icon-foreground_3f45f795.png",
       backgroundImage: "./assets/images/android-icon-background.png",
       monochromeImage: "./assets/images/android-icon-monochrome.png",
     },
@@ -87,7 +87,7 @@ const config: ExpoConfig = {
   web: {
     bundler: "metro",
     output: "static",
-    favicon: "./assets/images/favicon.png",
+    favicon: "https://d2xsxph8kpxj0f.cloudfront.net/310519663538599756/Aw9xoMMFEdGZdNpGTgZpJA/favicon_cacb34c6.png",
   },
   plugins: [
     "expo-router",
@@ -107,7 +107,7 @@ const config: ExpoConfig = {
     [
       "expo-splash-screen",
       {
-        image: "./assets/images/splash-icon.png",
+        image: "https://d2xsxph8kpxj0f.cloudfront.net/310519663538599756/Aw9xoMMFEdGZdNpGTgZpJA/splash-icon_310b1445.png",
         imageWidth: 200,
         resizeMode: "contain",
         backgroundColor: "#1B2A4A",

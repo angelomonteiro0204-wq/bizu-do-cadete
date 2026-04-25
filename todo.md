@@ -79,3 +79,14 @@
 - [x] Criar endpoints backend para admin.listPayments (relatório de pagamentos)
 - [x] Adicionar verificação de permissão de admin em todos os endpoints
 - [x] Adicionar barra de busca para filtrar usuários por nome/email
+
+## Webhook de Stripe
+
+- [x] Criar endpoint POST /api/webhooks/stripe para receber eventos
+- [x] Implementar verificação de assinatura Stripe (stripe-signature header)
+- [x] Processar evento charge.succeeded para atualizar assinatura
+- [x] Processar evento charge.failed para marcar pagamento como falho
+- [x] Processar evento charge.refunded para cancelar assinatura
+- [x] Processar evento customer.subscription.deleted para cancelar assinatura
+- [x] Adicionar logging de eventos webhook
+- [x] Criar 7 testes para webhook com cobertura completa (61 testes passando)

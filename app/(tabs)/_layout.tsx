@@ -2,7 +2,6 @@ import { Tabs } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { HapticTab } from "@/components/haptic-tab";
 import { IconSymbol } from "@/components/ui/icon-symbol";
-import { IconCustom } from "@/components/ui/icon-custom";
 import { Platform } from "react-native";
 import { useColors } from "@/hooks/use-colors";
 
@@ -33,7 +32,7 @@ export default function TabLayout() {
         options={{
           title: "Início",
           tabBarIcon: ({ color }) => (
-            <IconCustom size={28} name="pm-star" />
+            <IconSymbol size={28} name="house.fill" color={color} />
           ),
         }}
       />
@@ -42,7 +41,7 @@ export default function TabLayout() {
         options={{
           title: "Novo",
           tabBarIcon: ({ color }) => (
-            <IconCustom size={28} name="pm-book" />
+            <IconSymbol size={28} name="plus.circle.fill" color={color} />
           ),
         }}
       />
@@ -51,7 +50,7 @@ export default function TabLayout() {
         options={{
           title: "Histórico",
           tabBarIcon: ({ color }) => (
-            <IconCustom size={28} name="pm-laurel" />
+            <IconSymbol size={28} name="clock.fill" color={color} />
           ),
         }}
       />
@@ -60,7 +59,7 @@ export default function TabLayout() {
         options={{
           title: "Conta",
           tabBarIcon: ({ color }) => (
-            <IconCustom size={28} name="pm-badge" />
+            <IconSymbol size={28} name="person.fill" color={color} />
           ),
         }}
       />

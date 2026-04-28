@@ -115,6 +115,7 @@
 - [x] Criar componente IconCustom para renderizar ícones
 - [x] Atualizar tabs com ícones PM-SP (estrela, livro, louros, distintivo)
 - [x] Testar ícones em todas as telas (0 erros TypeScript)
+- [x] REVERTIDO: Retornar para ícones antigos do Material Icons (usuário não gostou dos novos ícones)
 
 ## Tema Escuro (Dark Mode)
 

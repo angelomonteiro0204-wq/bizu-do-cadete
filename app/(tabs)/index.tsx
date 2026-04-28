@@ -17,6 +17,7 @@ import { useAuthGate } from "@/lib/auth-context";
 import { ScaleButton } from "@/components/animations/ScaleButton";
 import { FadeInView } from "@/components/animations/FadeInView";
 import { SlideInView } from "@/components/animations/SlideInView";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 export default function HomeScreen() {
   const colors = useColors();
@@ -98,6 +99,7 @@ export default function HomeScreen() {
                   <MaterialIcons name="admin-panel-settings" size={22} color="#C8A84E" />
                 </TouchableOpacity>
               )}
+              <ThemeToggle />
               <TouchableOpacity
                 style={styles.logoutBtn}
                 onPress={logout}

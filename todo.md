@@ -115,3 +115,11 @@
 - [x] Criar componente IconCustom para renderizar ícones
 - [x] Atualizar tabs com ícones PM-SP (estrela, livro, louros, distintivo)
 - [x] Testar ícones em todas as telas (0 erros TypeScript)
+
+## Tema Escuro (Dark Mode)
+
+- [x] Criar paleta de cores dark mode com tema PM-SP (tons azulados)
+- [x] Atualizar theme.config.js com cores dark adaptadas
+- [x] Criar componente ThemeToggle (☀️/🌙) para seletor de tema
+- [x] Adicionar ThemeToggle no header da tela Home
+- [x] Testar dark mode em todas as telas (0 erros TypeScript)

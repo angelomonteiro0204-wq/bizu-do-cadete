@@ -22,6 +22,11 @@ module.exports = {
   theme: {
     extend: {
       colors: tailwindColors,
+      fontFamily: {
+        poppins: ['Poppins', 'sans-serif'],
+        playfair: ['Playfair Display', 'serif'],
+        mono: ['Roboto Mono', 'monospace'],
+      },
     },
   },
   plugins: [

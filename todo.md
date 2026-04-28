@@ -90,3 +90,12 @@
 - [x] Processar evento customer.subscription.deleted para cancelar assinatura
 - [x] Adicionar logging de eventos webhook
 - [x] Criar 7 testes para webhook com cobertura completa (61 testes passando)
+
+## Melhoria Visual do Aplicativo
+
+- [x] Adicionar Google Fonts premium (Poppins, Playfair Display, Roboto Mono)
+- [x] Atualizar tema e cores com paleta oficial PM-SP (Azul Marinho, Dourado, Verde, Vermelho)
+- [x] Refatorar componentes com design refinado (gradientes, sombras, ícones)
+- [x] Melhorar tipografia e hierarquia visual em todas as telas
+- [x] Atualizar global.css com estilos de tipografia
+- [x] Testar e validar novo design (0 erros TypeScript)

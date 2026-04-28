@@ -99,3 +99,12 @@
 - [x] Melhorar tipografia e hierarquia visual em todas as telas
 - [x] Atualizar global.css com estilos de tipografia
 - [x] Testar e validar novo design (0 erros TypeScript)
+
+## Animações de Transição
+
+- [x] Criar componente FadeInView para animações de fade-in
+- [x] Criar componente ScaleButton para animações de scale ao pressionar
+- [x] Criar componente SlideInView para animações de slide
+- [x] Implementar animações em botão "Novo Questionário"
+- [x] Implementar animações em cards de tentativas (fade-in com delay)
+- [x] Testar animações em todas as telas (0 erros TypeScript)

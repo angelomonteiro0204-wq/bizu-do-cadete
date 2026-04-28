@@ -14,6 +14,9 @@ import { getStats, getQuizzes, getAttempts, type AppStats } from "@/lib/quiz-sto
 import type { Quiz, QuizAttempt } from "@/shared/quiz-types";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { useAuthGate } from "@/lib/auth-context";
+import { ScaleButton } from "@/components/animations/ScaleButton";
+import { FadeInView } from "@/components/animations/FadeInView";
+import { SlideInView } from "@/components/animations/SlideInView";
 
 export default function HomeScreen() {
   const colors = useColors();
@@ -136,27 +139,27 @@ export default function HomeScreen() {
 
         {/* Quick Actions */}
         <View style={styles.section}>
-          <TouchableOpacity
-            style={[styles.primaryButton, { backgroundColor: colors.primary }]}
+          <ScaleButton
+            style={[styles.primaryButton, { backgroundColor: colors.primary }] as any}
             onPress={() => router.push("/(tabs)/new-quiz" as any)}
-            activeOpacity={0.8}
           >
             <MaterialIcons name="add-circle" size={24} color="#FFFFFF" />
             <Text style={styles.primaryButtonText}>Novo Questionário</Text>
             <MaterialIcons name="arrow-forward" size={20} color="#FFFFFF" />
-          </TouchableOpacity>
+          </ScaleButton>
         </View>
 
         {/* Recent Attempts */}
         {recentAttempts.length > 0 && (
           <View style={styles.section}>
             <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Últimas Tentativas</Text>
-            {recentAttempts.map((attempt) => {
+            {recentAttempts.map((attempt, index) => {
               const pct = Math.round((attempt.score / attempt.totalQuestions) * 100);
               const isGood = pct >= 70;
               return (
-                <View
+                <FadeInView
                   key={attempt.id}
+                  delay={index * 100}
                   style={[styles.attemptCard, { backgroundColor: colors.surface, borderColor: colors.border }]}
                 >
                   <View style={styles.attemptInfo}>
@@ -194,7 +197,7 @@ export default function HomeScreen() {
                       {attempt.score}/{attempt.totalQuestions}
                     </Text>
                   </View>
-                </View>
+                </FadeInView>
               );
             })}
           </View>

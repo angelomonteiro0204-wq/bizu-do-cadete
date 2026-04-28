@@ -108,3 +108,10 @@
 - [x] Implementar animações em botão "Novo Questionário"
 - [x] Implementar animações em cards de tentativas (fade-in com delay)
 - [x] Testar animações em todas as telas (0 erros TypeScript)
+
+## Ícones Customizados PM-SP
+
+- [x] Gerar 4 ícones customizados (estrela, distintivo, louros, livro)
+- [x] Criar componente IconCustom para renderizar ícones
+- [x] Atualizar tabs com ícones PM-SP (estrela, livro, louros, distintivo)
+- [x] Testar ícones em todas as telas (0 erros TypeScript)

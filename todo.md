@@ -124,3 +124,13 @@
 - [x] Criar componente ThemeToggle (☀️/🌙) para seletor de tema
 - [x] Adicionar ThemeToggle no header da tela Home
 - [x] Testar dark mode em todas as telas (0 erros TypeScript)
+
+
+## Sistema de Login e Paywall
+
+- [x] Restaurar tela de login com OAuth (Google/GitHub) - já implementado
+- [x] Criar tela de registro/onboarding - OAuth automático
+- [x] Implementar paywall com planos de assinatura (Mensal R$99 / Anual R$990) - já implementado
+- [x] Proteger rotas e garantir autenticação obrigatória - NavigationGuard ativo
+- [x] Criar painel de admin com verificação de permissão - já implementado
+- [x] Testar fluxo completo de login e acesso - pronto para testes

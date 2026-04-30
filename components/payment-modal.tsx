@@ -19,7 +19,7 @@ export function PaymentModal({
   onSelectPaymentMethod,
   isLoading = false,
   planName = "Mensal",
-  planPrice = 9900,
+  planPrice = 500,
 }: PaymentModalProps) {
   const colors = useColors();
   const [selectedMethod, setSelectedMethod] = useState<"card" | "pix" | null>(null);

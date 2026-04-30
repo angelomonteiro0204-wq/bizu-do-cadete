@@ -264,7 +264,7 @@ export default function MyAccountScreen() {
         }}
         isLoading={isProcessingPayment}
         planName="Mensal"
-        planPrice={9900}
+        planPrice={500}
       />
     </ScreenContainer>
   );
